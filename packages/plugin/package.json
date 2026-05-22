@@ -1,0 +1,33 @@
+{
+  "name": "@figle/plugin",
+  "version": "0.0.0",
+  "description": "figle Figma plugin — extract a structured Spec from the current selection.",
+  "license": "MIT",
+  "private": true,
+  "figma-plugin": {
+    "id": "figle",
+    "name": "figle",
+    "main": "src/main.ts",
+    "ui": "src/ui.tsx",
+    "networkAccess": {
+      "allowedDomains": [
+        "none"
+      ]
+    }
+  },
+  "scripts": {
+    "build": "build-figma-plugin --typecheck",
+    "watch": "build-figma-plugin --typecheck --watch",
+    "typecheck": "tsc --noEmit"
+  },
+  "dependencies": {
+    "@create-figma-plugin/ui": "4.0.3",
+    "@create-figma-plugin/utilities": "4.0.3",
+    "@figle/spec-schema": "workspace:*",
+    "preact": "10.29.2"
+  },
+  "devDependencies": {
+    "@create-figma-plugin/build": "4.0.3",
+    "@figma/plugin-typings": "1.126.0"
+  }
+}

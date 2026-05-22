@@ -1,0 +1,12 @@
+{
+  "extends": "../../tsconfig.base.json",
+  "compilerOptions": {
+    "rootDir": "src",
+    "outDir": "build",
+    "jsx": "react-jsx",
+    "jsxImportSource": "preact",
+    "types": ["@figma/plugin-typings"],
+    "lib": ["ES2023", "DOM"]
+  },
+  "include": ["src/**/*"]
+}
