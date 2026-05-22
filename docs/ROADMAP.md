@@ -60,6 +60,10 @@ Local Playwright server alongside the plugin. After the IDE agent emits an SFC, 
 
 React + TS + Tailwind, then Svelte. Requires extracting the agent prompt template into stack-specific variants and adding `stack` discriminator handling in the plugin UI.
 
+### Phase 13.5 — Optional token-source importers
+
+A CLI helper (`npx figle import-tokens --from=<source>`) that pre-fills the `tokens:` block of `figle.config.ts` from an existing token pipeline — initial candidates: `style-dictionary`, `tokens-studio`. Optional, additive, and never a runtime dependency: figle stays agnostic about how the project manages its tokens. Concrete sources will be picked once real pilots show which formats users actually have.
+
 ### Phase 14 — Design-lint mode
 
 A separate plugin entry that runs only the `extract → resolve` portion and shows warnings without producing a `Spec` for the agent. Designed for use during design review, not code generation. Possibly a separate tab in the same plugin.
