@@ -10,5 +10,13 @@ export default defineConfig({
   rules: {
     "no-console": "warn",
   },
+  overrides: [
+    {
+      files: ["packages/bridge/src/**/*.ts"],
+      rules: {
+        "no-console": "off",
+      },
+    },
+  ],
   ignorePatterns: ["**/dist/**", "**/node_modules/**", "**/.figle/**"],
 });

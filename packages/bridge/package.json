@@ -1,0 +1,35 @@
+{
+  "name": "@figle/cli",
+  "version": "0.0.0",
+  "description": "CLI for figle: sync the bridge config to the plugin, paste extracted Specs into the project.",
+  "license": "MIT",
+  "type": "module",
+  "main": "./dist/index.js",
+  "module": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js"
+    }
+  },
+  "bin": {
+    "figle": "./dist/cli.js"
+  },
+  "files": [
+    "dist"
+  ],
+  "scripts": {
+    "build": "tsdown",
+    "typecheck": "tsc --noEmit"
+  },
+  "dependencies": {
+    "@figle/spec-schema": "workspace:*",
+    "clipboardy": "5.3.1",
+    "jiti": "2.7.0",
+    "zod": "4.4.3"
+  },
+  "devDependencies": {
+    "@types/node": "25.9.1"
+  }
+}
