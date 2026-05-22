@@ -1,4 +1,13 @@
-import { Button, Muted, Text, VerticalSpace } from "@create-figma-plugin/ui";
+import {
+  Banner,
+  Button,
+  IconWarning16,
+  Muted,
+  Stack,
+  Text,
+  VerticalSpace,
+} from "@create-figma-plugin/ui";
+import type { Warning } from "@figle/spec-schema";
 import { emit, on } from "@create-figma-plugin/utilities";
 import { useEffect, useState } from "preact/hooks";
 import type {
@@ -10,10 +19,12 @@ import type {
 export function ExtractTab() {
   const [state, setState] = useState<ExtractResultPayload | null>(null);
   const [busy, setBusy] = useState(false);
+  const [copied, setCopied] = useState(false);
 
   useEffect(() => {
     return on<ExtractResultHandler>("EXTRACT_RESULT", (payload) => {
       setBusy(false);
+      setCopied(false);
       setState(payload);
     });
   }, []);
@@ -21,7 +32,14 @@ export function ExtractTab() {
   const onExtract = () => {
     setBusy(true);
     setState(null);
+    setCopied(false);
     emit<ExtractRequestHandler>("EXTRACT_REQUEST");
+  };
+
+  const onCopy = async () => {
+    if (!state?.ok) return;
+    await navigator.clipboard.writeText(JSON.stringify(state.spec, null, 2));
+    setCopied(true);
   };
 
   return (
@@ -29,37 +47,76 @@ export function ExtractTab() {
       <VerticalSpace space="medium" />
       <Text>
         <Muted>
-          Select a frame, then click Extract. Raw node tree (pre-resolve) will
-          appear below.
+          Select a frame, click Extract. Review the Spec and warnings, then Copy
+          and run <code>npx figle paste</code> in your project.
         </Muted>
       </Text>
       <VerticalSpace space="small" />
-      <Button onClick={onExtract} disabled={busy} fullWidth>
-        {busy ? "Extracting…" : "Extract"}
-      </Button>
+      <Stack space="small">
+        <Button onClick={onExtract} disabled={busy} fullWidth>
+          {busy ? "Extracting…" : "Extract"}
+        </Button>
+        {state?.ok && (
+          <Button onClick={onCopy} secondary fullWidth>
+            {copied ? "Copied ✓" : "Copy Spec"}
+          </Button>
+        )}
+      </Stack>
       <VerticalSpace space="small" />
       {state && !state.ok && (
-        <Text>
-          <Muted>{state.error}</Muted>
-        </Text>
+        <Banner icon={<IconWarning16 />} variant="warning">
+          {state.error}
+        </Banner>
       )}
-      {state && state.ok && (
-        <pre
-          style={{
-            fontSize: 10,
-            lineHeight: "12px",
-            maxHeight: 320,
-            overflow: "auto",
-            background: "var(--figma-color-bg-secondary)",
-            padding: 8,
-            borderRadius: 4,
-            margin: 0,
-          }}
-        >
-          {JSON.stringify(state.raw, null, 2)}
-        </pre>
+      {state?.ok && state.warnings.length > 0 && (
+        <WarningsPanel warnings={state.warnings} />
       )}
+      {state?.ok && <SpecPanel json={JSON.stringify(state.spec, null, 2)} />}
       <VerticalSpace space="medium" />
+    </div>
+  );
+}
+
+function WarningsPanel({ warnings }: { warnings: Warning[] }) {
+  return (
+    <div>
+      <VerticalSpace space="small" />
+      <Text>
+        <Muted>
+          {warnings.length} warning{warnings.length === 1 ? "" : "s"}
+        </Muted>
+      </Text>
+      <VerticalSpace space="extraSmall" />
+      <ul style={{ margin: 0, paddingLeft: 16, fontSize: 11 }}>
+        {warnings.map((w) => (
+          <li key={`${w.nodeId}-${w.code}`}>
+            <strong>{w.code}</strong> <Muted>{w.nodePath}</Muted>
+            <div>{w.message}</div>
+          </li>
+        ))}
+      </ul>
+    </div>
+  );
+}
+
+function SpecPanel({ json }: { json: string }) {
+  return (
+    <div>
+      <VerticalSpace space="small" />
+      <pre
+        style={{
+          fontSize: 10,
+          lineHeight: "14px",
+          maxHeight: 320,
+          overflow: "auto",
+          background: "var(--figma-color-bg-secondary)",
+          padding: 8,
+          borderRadius: 4,
+          margin: 0,
+        }}
+      >
+        {json}
+      </pre>
     </div>
   );
 }
