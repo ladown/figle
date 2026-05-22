@@ -25,6 +25,7 @@ Thumbs.db
 .idea/
 .vscode/
 *.swp
+.zed/
 
 # figle runtime artifacts in consumer projects
 .figle/

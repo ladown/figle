@@ -38,6 +38,8 @@ async function main(): Promise<void> {
 }
 
 main().catch((err: unknown) => {
-  console.error(err instanceof Error ? err.stack ?? err.message : String(err));
+  console.error(
+    err instanceof Error ? (err.stack ?? err.message) : String(err),
+  );
   process.exit(1);
 });

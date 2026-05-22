@@ -1,11 +1,7 @@
 import { mkdir, writeFile } from "node:fs/promises";
 import { resolve } from "node:path";
 import clipboard from "clipboardy";
-import {
-  SpecSchema,
-  renderPrompt,
-  type Spec,
-} from "@figle/spec-schema";
+import { SpecSchema, renderPrompt, type Spec } from "@figle/spec-schema";
 import { sortKeysDeep } from "../sort-keys.js";
 
 export async function runPaste(cwd: string): Promise<void> {

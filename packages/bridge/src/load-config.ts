@@ -1,10 +1,7 @@
 import { existsSync } from "node:fs";
 import { dirname, resolve } from "node:path";
 import { createJiti } from "jiti";
-import {
-  BridgeConfigSchema,
-  type BridgeConfig,
-} from "@figle/spec-schema";
+import { BridgeConfigSchema, type BridgeConfig } from "@figle/spec-schema";
 
 const CONFIG_NAMES = [
   "figle.config.ts",
