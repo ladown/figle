@@ -28,12 +28,7 @@ function resolveNode(ctx: ResolveContext, node: RawNode): ResolvedNode {
   if (node.instance) {
     const match = lookupComponent(ctx, node);
     if (match) {
-      return resolveInstance(ctx, node, match.descriptor, (childCtx, child) => {
-        childCtx.enter(child.name);
-        const r = resolveNode(childCtx, child);
-        childCtx.exit();
-        return r;
-      });
+      return resolveInstance(ctx, node, match.descriptor, resolveNode);
     }
     ctx.warn(
       node,

@@ -1,7 +1,7 @@
 import clipboard from "clipboardy";
+import { sortKeysDeep } from "@figle/spec-schema";
 import { findConfigPath, loadConfig } from "../load-config.js";
 import { hashConfig } from "../hash.js";
-import { sortKeysDeep } from "../sort-keys.js";
 
 export async function runSync(cwd: string): Promise<void> {
   const configPath = findConfigPath(cwd);

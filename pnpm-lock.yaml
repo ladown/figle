@@ -24,6 +24,12 @@ importers:
         specifier: 4.1.7
         version: 4.1.7(@types/node@25.9.1)(vite@8.0.14(@types/node@25.9.1)(jiti@2.7.0))
 
+  examples/demo-vue-app:
+    devDependencies:
+      '@figle/cli':
+        specifier: workspace:*
+        version: link:../../packages/bridge
+
   packages/bridge:
     dependencies:
       '@figle/spec-schema':

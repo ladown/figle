@@ -1,0 +1,34 @@
+{
+  "meta": {
+    "extractedAt": "2026-05-22T10:00:00.000Z",
+    "figmaFileKey": "demo-file-key"
+  },
+  "root": {
+    "$component": "UiCard",
+    "children": [
+      {
+        "$type": "text",
+        "content": "Welcome",
+        "semantic": "heading-1",
+        "typography": { "$token": "typography.heading.lg" }
+      },
+      {
+        "$component": "UiButton",
+        "children": [{ "$type": "text", "content": "Get started" }],
+        "importPath": "@/components/UiButton.vue",
+        "props": { "size": "md", "variant": "primary" }
+      }
+    ],
+    "importPath": "@/components/UiCard.vue",
+    "props": { "variant": "elevated" }
+  },
+  "version": "0.1",
+  "warnings": [
+    {
+      "code": "UNBOUND_TYPOGRAPHY",
+      "message": "Text \"Get started\" uses ad-hoc font properties",
+      "nodeId": "t_label",
+      "nodePath": "Card > Button > Get started"
+    }
+  ]
+}

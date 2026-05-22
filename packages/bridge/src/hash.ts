@@ -1,5 +1,5 @@
 import { createHash } from "node:crypto";
-import { sortKeysDeep } from "./sort-keys.js";
+import { sortKeysDeep } from "@figle/spec-schema";
 
 export function hashConfig(config: unknown): string {
   const canonical = JSON.stringify(sortKeysDeep(config));

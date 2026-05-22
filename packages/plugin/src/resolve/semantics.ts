@@ -44,6 +44,5 @@ export function inferTextSemantic(
   if (fontSize >= 24) return "heading-2";
   if (fontSize >= 20) return "heading-3";
   if (fontSize >= 18) return "heading-4";
-  if (fontSize <= 12) return "caption";
-  return "body";
+  return null;
 }

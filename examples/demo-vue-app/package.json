@@ -1,0 +1,10 @@
+{
+  "name": "demo-vue-app",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "description": "Reference consumer for figle: fixture project with UiCard and UiButton.",
+  "devDependencies": {
+    "@figle/cli": "workspace:*"
+  }
+}

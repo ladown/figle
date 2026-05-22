@@ -11,7 +11,11 @@ export type ResolveMeta = {
   nodePath: string;
 };
 
-export type ResolvedComponentRef = ComponentRef & { _meta: ResolveMeta };
+export type ResolvedComponentRef = Omit<ComponentRef, "children" | "slots"> & {
+  _meta: ResolveMeta;
+  children?: ResolvedNode[];
+  slots?: Record<string, ResolvedNode[]>;
+};
 export type ResolvedLayoutNode = Omit<LayoutNode, "children"> & {
   _meta: ResolveMeta;
   children: ResolvedNode[];
