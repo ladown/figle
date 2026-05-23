@@ -144,13 +144,13 @@ Rules:
 
 ```ts
 type TokenRef = {
-  $token: string; // project-side token path
-  fallback?: string; // raw value, included when designer set both var + override
+  $token: string; // project-side token path (or figma-side path in zero-config mode)
+  fallback?: string | number | TypographyProps; // raw resolved value
 };
 ```
 
-- `$token` is the **project-side** path (the value in `BridgeConfig.tokens`), not the Figma variable name. Translation happens during resolution.
-- `fallback` appears only when the Figma node has both a bound variable and a non-default override applied (rare but legal).
+- `$token` is the **project-side** path (the value in `BridgeConfig.tokens`) when the config maps the Figma variable/style; in zero-config mode it is the Figma-side path (e.g. `color/primary/500`).
+- `fallback` is **always populated** by the plugin with the resolved value the Figma node was actually using. The IDE agent uses it as a safety net: if the project doesn't actually expose `$token`, the agent can still render with the raw value (hex for colors, number for spacing/radius, `TypographyProps` for typography). The shape of the fallback follows the value type — strings for colors, numbers for spacing/radius, structured `TypographyProps` for typography.
 
 ## Warnings
 

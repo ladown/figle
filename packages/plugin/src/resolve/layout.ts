@@ -86,12 +86,16 @@ function resolveSpacing(
   alias: { name: string; collection?: string } | undefined,
 ): TokenRef | number {
   if (alias) {
-    const { ref, mapped } = lookupVariable(ctx, {
-      type: "VARIABLE_ALIAS",
-      id: "",
-      name: alias.name,
-      ...(alias.collection ? { collection: alias.collection } : {}),
-    });
+    const { ref, mapped } = lookupVariable(
+      ctx,
+      {
+        type: "VARIABLE_ALIAS",
+        id: "",
+        name: alias.name,
+        ...(alias.collection ? { collection: alias.collection } : {}),
+      },
+      value,
+    );
     if (mapped) return ref;
     ctx.warn(
       node,

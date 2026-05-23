@@ -13,8 +13,10 @@ export function resolvePaint(
   if (!paint) return undefined;
   if (paint.type !== "SOLID") return undefined;
 
+  const hex = rgbToHex(paint.color);
+
   if (paint.boundVariable) {
-    const { ref, mapped } = lookupVariable(ctx, paint.boundVariable);
+    const { ref, mapped } = lookupVariable(ctx, paint.boundVariable, hex);
     if (mapped) return ref;
     ctx.warn(
       node,
@@ -25,7 +27,7 @@ export function resolvePaint(
   }
 
   if (styleName) {
-    const { ref, mapped } = lookupStyle(ctx, styleName);
+    const { ref, mapped } = lookupStyle(ctx, styleName, hex);
     if (mapped) return ref;
     ctx.warn(
       node,
@@ -40,7 +42,7 @@ export function resolvePaint(
     "UNBOUND_COLOR",
     `${kind} on "${node.name}" uses a raw color value`,
   );
-  return rgbToHex(paint.color);
+  return hex;
 }
 
 function rgbToHex(color: { r: number; g: number; b: number }): string {

@@ -9,7 +9,14 @@
       {
         "$type": "text",
         "content": "Welcome",
-        "typography": { "$token": "typography.heading.lg" }
+        "typography": {
+          "$token": "typography.heading.lg",
+          "fallback": {
+            "fontFamily": "Inter",
+            "fontSize": 32,
+            "fontStyle": "Bold"
+          }
+        }
       },
       {
         "$component": "UiButton",

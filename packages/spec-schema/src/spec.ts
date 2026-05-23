@@ -2,9 +2,27 @@ import { z } from "zod";
 
 export const SPEC_VERSION = "0.1" as const;
 
+export type TypographyProps = {
+  fontFamily: string;
+  fontStyle?: string | undefined;
+  fontWeight?: number | undefined;
+  fontSize: number;
+  lineHeight?: number | undefined;
+  letterSpacing?: number | undefined;
+};
+
+export const TypographyPropsSchema = z.object({
+  fontFamily: z.string().min(1),
+  fontStyle: z.string().optional(),
+  fontWeight: z.number().positive().optional(),
+  fontSize: z.number().positive(),
+  lineHeight: z.number().nonnegative().optional(),
+  letterSpacing: z.number().optional(),
+});
+
 export const TokenRefSchema = z.object({
   $token: z.string().min(1),
-  fallback: z.string().optional(),
+  fallback: z.union([z.string(), z.number(), TypographyPropsSchema]).optional(),
 });
 
 export type TokenRef = z.infer<typeof TokenRefSchema>;
@@ -101,24 +119,6 @@ export type LayoutNode = {
   size?: z.infer<typeof SizeSchema> | undefined;
   children: SpecNode[];
 };
-
-export type TypographyProps = {
-  fontFamily: string;
-  fontStyle?: string | undefined;
-  fontWeight?: number | undefined;
-  fontSize: number;
-  lineHeight?: number | undefined;
-  letterSpacing?: number | undefined;
-};
-
-export const TypographyPropsSchema = z.object({
-  fontFamily: z.string().min(1),
-  fontStyle: z.string().optional(),
-  fontWeight: z.number().positive().optional(),
-  fontSize: z.number().positive(),
-  lineHeight: z.number().nonnegative().optional(),
-  letterSpacing: z.number().optional(),
-});
 
 export type TextNode = {
   $type: "text";

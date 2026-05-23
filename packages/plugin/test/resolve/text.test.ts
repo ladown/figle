@@ -3,7 +3,7 @@ import { resolve } from "../../src/resolve/index.js";
 import { demoConfig, textNode } from "./fixtures.js";
 
 describe("resolveText", () => {
-  it("maps a bound typography variable to a TokenRef", () => {
+  it("maps a bound typography variable to a TokenRef with fallback", () => {
     const node = textNode("Welcome", {
       text: {
         content: "Welcome",
@@ -24,7 +24,10 @@ describe("resolveText", () => {
     expect(root).toMatchObject({
       $type: "text",
       content: "Welcome",
-      typography: { $token: "typography.heading.lg" },
+      typography: {
+        $token: "typography.heading.lg",
+        fallback: { fontFamily: "Inter", fontStyle: "Bold", fontSize: 32 },
+      },
     });
   });
 

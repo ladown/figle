@@ -21,9 +21,10 @@ export function resolveText(
 
   const tyVar = node.text.typography.boundVariable;
   const tyStyle = node.text.typography.textStyleName;
+  const props = toTypographyProps(node.text.typography);
 
   if (tyVar) {
-    const { ref, mapped } = lookupVariable(ctx, tyVar);
+    const { ref, mapped } = lookupVariable(ctx, tyVar, props);
     out.typography = ref;
     if (!mapped) {
       ctx.warn(
@@ -33,7 +34,7 @@ export function resolveText(
       );
     }
   } else if (tyStyle) {
-    const { ref, mapped } = lookupStyle(ctx, tyStyle);
+    const { ref, mapped } = lookupStyle(ctx, tyStyle, props);
     out.typography = ref;
     if (!mapped) {
       ctx.warn(
@@ -43,7 +44,7 @@ export function resolveText(
       );
     }
   } else {
-    out.typography = toTypographyProps(node.text.typography);
+    out.typography = props;
     ctx.warn(
       node,
       "UNBOUND_TYPOGRAPHY",
