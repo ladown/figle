@@ -234,22 +234,37 @@ If all three hold, the resolution algorithm and the agent prompt are validated. 
 
 After MVP — pilot on real designs, collect cases where resolution breaks, and only then take on: states via MDX, screenshot diffing, multi-stack support.
 
-## Phase 10 (post-MVP, optional) — MCP preset as a second branch
+## Phase 10 — MCP preset as a second branch
 
-Once the `Spec` and agent prompt have stabilized on the plugin, we add an alternative consumption path for users who have a **Figma Dev seat** and work from Claude Code / Cursor / Windsurf.
+Alternative consumption path for users who have a **paid Figma Developer seat** and work from Claude Code / Cursor / Windsurf with the official Figma Dev Mode MCP server enabled.
 
-**Context.** The official Figma Dev Mode MCP Server is a localhost server launched from the Figma desktop app that exposes data about the selected frame (variables, components, layout) to AI agents. It requires a paid Dev seat + Figma desktop. For users without the subscription, Branch A (plugin) remains.
+**Context.** The Figma Dev Mode MCP server is a localhost service launched from the Figma desktop app. It exposes generated code (`get_design_context`), variable values (`get_variable_defs`), and structure metadata (`get_metadata`) about the selected frame. It requires a paid Developer seat + Figma desktop. For users without the seat, Branch A (plugin) remains the only path.
+
+**Architectural pivot (vs the original plan).** The original Phase 10 design called for an adapter `figma-mcp-json → Spec`. After capturing real MCP responses we determined this is the wrong shape. The Figma Dev Mode MCP returns:
+
+- `get_design_context` — a generated React + Tailwind code **string** (not a tree), with token bindings only visible as `var(--name, value)` inside `className` strings.
+- `get_metadata` — a shallow XML overview (one top-level node, geometry only, no children, no bindings).
+- `get_variable_defs` — a flat map of used variables to resolved values.
+- `get_code_connect_map` — gated behind a paid Developer seat.
+
+Producing a structured `Spec` from this would require real JSX parsing (Babel-level), AST walking, cross-referencing with `get_metadata`, and parsing `Font(...)` typography values from `get_variable_defs`. That is **thicker than Branch A's entire `extract → resolve → serialize` pipeline**, not thinner, and it re-implements work the IDE agent is already designed to do — interpret rendered code in context.
+
+So `Spec` is now treated as **Branch A's internal contract**, not the cross-branch contract. The cross-branch contract is the **prompt template** (`@figle/spec-schema/prompt-template`). Both branches produce SFCs following the same rules; what they hand the agent is a per-branch detail.
 
 **What lives in `packages/mcp-preset/`:**
 
-- Skill / slash command (`/figle`) for Claude Code.
-- Reuses the same prompt template as the plugin (`spec-schema/src/prompt-template.ts`).
-- Adapter `figma-mcp-json → Spec` (a thin mapper function: the Figma MCP format into our canonical Spec).
-- Instructions to use Filesystem MCP for reading the project (`tailwind.config.ts`, `src/components/*`) — eliminating the bridge-config-paste step for this branch.
-- README with steps to configure the MCP servers in Claude Code.
+- [`skill/SKILL.md`](./packages/mcp-preset/skill/SKILL.md) — the actual skill body for Claude Code. Tells the agent which MCP tools to call, how to resolve component mapping in tiers, and how to translate the result into a Vue SFC using figle's prompt rules.
+- [`src/cli.ts`](./packages/mcp-preset/src/cli.ts) — `npx @figle/mcp-preset install` copies `SKILL.md` into `~/.claude/skills/figle/`.
 
-**Reused:** `spec-schema`, agent prompt template. **Not reused:** the plugin UI, `clientStorage`, paste flow, warnings panel (in this branch the agent prints warnings to the chat, not to a UI).
+**Tiered component mapping** (skill instructs the agent to try in order):
 
-**Pass criteria:** the same `DemoCard` fixture, producing the same expected Spec and SFC as in Branch A — but via the MCP pipeline. If both paths emit identical Specs, the contract holds.
+1. `figle.config.ts` in project root — same file Branch A's plugin reads. **`figle.config.ts` is the shared contract; only the delivery differs** (plugin gets it via clipboard paste; MCP skill reads it via Filesystem MCP).
+2. `get_code_connect_map` — if Code Connect is set up.
+3. `.figle/components-index.json` — agent-maintained cache (mtime-based invalidation). First invocation populates it by scanning `src/components/**/*.vue`.
+4. Fallback — emit the raw Figma component name with a TODO comment.
 
-**Risk:** if Figma MCP returns a significantly incomplete or differently-shaped JSON compared to what the plugin extracts, the adapter function will be thicker than expected. Mitigation: during the pilot, run MCP on a real frame and diff it against the plugin's output.
+**Reused:** `PROMPT_TEMPLATE` from `@figle/spec-schema`; `figle.config.ts` schema. **Not reused:** plugin UI, `clientStorage`, paste flow, warnings panel.
+
+**Pass criteria:** the same `DemoCard` (or another real frame) produces a Vue SFC of comparable quality to Branch A. The contract is the prompt rules — output should follow them regardless of consumption path. Diffing the SFCs from both branches should be a small delta (component-instance handling, the main divergence point).
+
+**Token-cost note:** Branch B is structurally more expensive per use than Branch A (the agent does the digestion that the plugin pre-computes). The `figle.config.ts` and the components-index cache are the main mitigations. Anthropic prompt caching helps on top of that.

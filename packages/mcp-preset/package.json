@@ -1,0 +1,33 @@
+{
+  "name": "@figle/mcp-preset",
+  "version": "0.0.0",
+  "description": "Skill for Claude Code / Cursor that orchestrates Figma Dev Mode MCP and Filesystem MCP to generate Vue SFCs.",
+  "license": "MIT",
+  "type": "module",
+  "main": "./dist/index.js",
+  "module": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js"
+    }
+  },
+  "bin": {
+    "figle-mcp": "./dist/cli.js"
+  },
+  "files": [
+    "dist",
+    "skill"
+  ],
+  "scripts": {
+    "build": "tsdown",
+    "typecheck": "tsc --noEmit"
+  },
+  "dependencies": {
+    "@figle/spec-schema": "workspace:*"
+  },
+  "devDependencies": {
+    "@types/node": "25.9.1"
+  }
+}

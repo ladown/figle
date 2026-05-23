@@ -49,6 +49,16 @@ importers:
         specifier: 25.9.1
         version: 25.9.1
 
+  packages/mcp-preset:
+    dependencies:
+      '@figle/spec-schema':
+        specifier: workspace:*
+        version: link:../spec-schema
+    devDependencies:
+      '@types/node':
+        specifier: 25.9.1
+        version: 25.9.1
+
   packages/plugin:
     dependencies:
       '@create-figma-plugin/ui':

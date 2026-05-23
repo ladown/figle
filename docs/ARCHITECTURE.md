@@ -4,39 +4,39 @@ This document describes the mid-level architecture. For the full implementation 
 
 ## One-paragraph summary
 
-A Figma selection is extracted into a structured `Spec` (JSON). The `Spec` is materialized on disk in the user's project and then consumed by an AI agent that already runs in the user's IDE (Claude Code, Cursor, etc.) — the agent has the project context (`CLAUDE.md`, existing components, conventions) and generates the Vue SFC from the `Spec`. The project itself never calls an LLM provider. Two independent producers can build the same `Spec`: a Figma plugin (for users without a Figma Dev seat) and an MCP-driven workflow (for users with one). Both share the same schema, the same agent prompt template, and the same fixture.
+A Figma selection is turned into a Vue 3 SFC by an AI agent that already runs in the user's IDE (Claude Code, Cursor, etc.) — the agent has the project context (`CLAUDE.md`, existing components, conventions) and the user's existing AI subscription. The figle project never calls an LLM provider itself. Two independent consumption paths exist: **Branch A** is a Figma plugin that produces a structured `Spec` (JSON), materialized on disk in the user's project (`.figle/last-spec.json` + `PROMPT.md`) and consumed by the agent. **Branch B** is a Skill for Claude Code / Cursor that orchestrates the Figma Dev Mode MCP server and the Filesystem MCP directly — no intermediate `Spec`. Both branches share one cross-branch contract: the agent prompt template (`PROMPT_TEMPLATE` in `@figle/spec-schema`). Both also share the optional user-side `figle.config.ts` for component and token mappings.
 
 ## The pipeline
 
 ```
-                ┌────────────────────────────────────────────┐
-                │                spec-schema                 │
-                │   (Spec, BridgeConfig, prompt template)    │
-                └───────────────┬────────────────────────────┘
-                                │ contract
-        ┌───────────────────────┼───────────────────────┐
-        │                                               │
- ┌──────▼────────┐                              ┌───────▼────────┐
- │   Branch A    │                              │    Branch B    │
- │ Figma plugin  │                              │  MCP preset    │
- │ (no Dev seat) │                              │  (Dev seat)    │
- └──────┬────────┘                              └───────┬────────┘
-        │                                               │
-   extract ─► resolve ─► serialize           Figma MCP ─► adapter
-        │                                               │
-        └──────────────────► Spec ◄────────────────────┘
-                              │
-                              ▼
-                .figle/last-spec.json + PROMPT.md
-                              │
-                              ▼
-                IDE agent (Claude Code / Cursor / …)
-                              │
-                              ▼
-                          Vue SFC
+              ┌────────────────────────────────────────────┐
+              │                spec-schema                 │
+              │ (PROMPT_TEMPLATE, BridgeConfig, Spec types)│
+              └────────┬─────────────────────────┬─────────┘
+                       │                         │
+                  prompt + Spec             prompt only
+                       │                         │
+              ┌────────▼─────────┐     ┌─────────▼────────┐
+              │    Branch A      │     │     Branch B     │
+              │  Figma plugin    │     │   MCP preset     │
+              │  (no Dev seat)   │     │  (Dev seat)      │
+              └────────┬─────────┘     └─────────┬────────┘
+                       │                         │
+            extract ─► resolve ─► serialize      Figma MCP +
+                       │                         Filesystem MCP
+                       ▼                         │
+            .figle/last-spec.json                │
+                + PROMPT.md                      │
+                       │                         │
+                       └────────────┬────────────┘
+                                    ▼
+                  IDE agent (Claude Code / Cursor / …)
+                                    │
+                                    ▼
+                                 Vue SFC
 ```
 
-Note the agent box. Code generation is **not** part of this project. It happens in the user's IDE, with project context the agent already has — and with the user's existing AI subscription.
+Note the agent box. Code generation is **not** part of this project. It happens in the user's IDE, with project context the agent already has — and with the user's existing AI subscription. Branch A hands the agent a pre-resolved `Spec` because the plugin has no LLM of its own; Branch B's agent reads Figma MCP responses directly and follows the same prompt rules.
 
 ## Branch A: Figma plugin
 
@@ -53,28 +53,36 @@ Why three modules instead of one big function: `extract` is the only module that
 
 The plugin UI ends at the `Spec` panel with a **Copy** button. Nothing leaves the sandbox over the network. `manifest.json` sets `networkAccess: { allowedDomains: ["none"] }`.
 
-## Branch B: MCP preset (post-MVP)
+## Branch B: MCP preset
 
-A Skill or slash command for Claude Code / Cursor that does not run inside Figma. The pipeline becomes:
+A Skill for Claude Code / Cursor / Windsurf that does not run inside Figma. The pipeline becomes:
 
-1. Agent calls the official **Figma Dev Mode MCP server** to read the currently-selected frame.
-2. A thin adapter (`figma-mcp-json → Spec`) reshapes the response into the canonical `Spec`. This adapter mirrors `extract + resolve + serialize` but is shorter because the MCP server has already done part of the work.
-3. Agent uses a **Filesystem MCP** to read the project's `tailwind.config.ts` and `src/components/*` — this replaces the bridge-config-paste step from Branch A.
-4. The same agent prompt template guides SFC generation.
+1. Agent calls the official **Figma Dev Mode MCP server** to read the currently-selected frame (`get_design_context`, `get_variable_defs`, `get_metadata`).
+2. Agent resolves component mapping via a **tiered fallback**: `figle.config.ts` → `get_code_connect_map` → an agent-maintained `.figle/components-index.json` cache → raw Figma names with a TODO.
+3. Agent uses a **Filesystem MCP** (or its built-in file tools) to read minimum-necessary project files — `tailwind.config.*`, `CLAUDE.md`, the specific component file(s) it imports.
+4. The same `PROMPT_TEMPLATE` from `@figle/spec-schema` guides SFC generation.
 
-This branch is post-MVP because it depends on a paid Dev seat. The MVP must work without it.
+This branch produces no intermediate `Spec`. The agent consumes the Figma MCP output directly. See [`../PLAN.md`](../PLAN.md) § Phase 10 for why an adapter would be the wrong shape.
 
-## The contract: `spec-schema`
+This branch requires a paid Figma Developer seat (the Dev Mode MCP server is gated). Users without the seat use Branch A.
 
-`packages/spec-schema` is the only package both branches depend on. It contains:
+## The contracts: `spec-schema`
 
-- TypeScript types for `Spec`, `SpecNode` (`ComponentRef | LayoutNode | TextNode`), `TokenRef`, `Warning`.
-- TypeScript types for `BridgeConfig` (tokens table + components table + stack identifier).
-- Zod schemas for both, with type inference (`z.infer<typeof SpecSchema>`).
+`packages/spec-schema` contains two distinct contracts that branches share differently:
+
+**Cross-branch contract — the agent prompt template.** Both Branch A and Branch B produce a Vue SFC by following the same rules from `PROMPT_TEMPLATE`. The cross-branch invariant is _"given equivalent input, both branches' agents should emit comparable SFCs"_. The template is the only artifact both branches reach for.
+
+**Branch A's internal contract — the `Spec`.** The plugin runs without an LLM and therefore needs to hand the IDE agent a pre-resolved, validated structure. `Spec` exists for that. Branch B has the agent in the loop from the start; it does not need an intermediate structured form. (Earlier drafts of Phase 10 planned a `figma-mcp-json → Spec` adapter for Branch B; we dropped it after seeing the real MCP output — see [`../PLAN.md`](../PLAN.md) § Phase 10.)
+
+**Shared user-side config — `figle.config.ts`.** Same file schema, two delivery paths: Branch A receives it via clipboard paste into `clientStorage`; Branch B reads it directly via Filesystem MCP. Both branches make the config optional; both run in zero-config mode without it. See [`./BRIDGE_CONFIG.md`](./BRIDGE_CONFIG.md).
+
+`packages/spec-schema` therefore contains:
+
+- TypeScript types and Zod schemas for `Spec`, `SpecNode` (`ComponentRef | LayoutNode | TextNode`), `TokenRef`, `Warning`, `BridgeConfig`.
 - The agent prompt template as a string constant.
 - A `defineConfig(...)` helper for typed config files in user projects.
 
-If a producer cannot make its output validate against `SpecSchema.parse(...)`, that's a contract violation — fail loudly, don't paper over it.
+If Branch A's producer cannot make its output validate against `SpecSchema.parse(...)`, that's a contract violation — fail loudly, don't paper over it. (Branch B does not produce a `Spec` at all.)
 
 See [`./SPEC_FORMAT.md`](./SPEC_FORMAT.md) for the full schema reference.
 
@@ -87,7 +95,7 @@ The bridge package lives in the user's project and does two things:
 
 `@figle/cli` also exports `defineConfig(...)` for typed config files.
 
-**Branch A** uses both commands. **Branch B** uses neither — the agent reads project files directly via Filesystem MCP.
+**Branch A** uses both commands. **Branch B** uses neither — the agent reads `figle.config.ts` directly via Filesystem MCP, and produces the SFC without going through `Spec`.
 
 ## Bridge config
 

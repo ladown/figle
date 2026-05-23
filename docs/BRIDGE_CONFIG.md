@@ -6,7 +6,12 @@ The bridge config is the user project's mapping file. It tells the resolver:
 - How Figma component names correspond to project component imports and props.
 - Which target stack the project uses.
 
-**The config is optional.** Without it the plugin still extracts a valid `Spec` — Figma-side names are kept as-is and the IDE agent resolves them against the project. With a config the plugin pre-translates names into project-side aliases and emits mapping-warnings (`UNKNOWN_COMPONENT`, `UNMAPPED_TOKEN`) when the design references something the config doesn't cover. See [`./RESOLUTION.md`](./RESOLUTION.md) § Config-optional mode.
+**The config is optional and shared by both branches.** Without it both branches still work — Figma-side names are kept as-is and the IDE agent resolves them against the project. With it the producer pre-translates names into project-side aliases (and Branch A's plugin additionally emits mapping warnings — `UNKNOWN_COMPONENT`, `UNMAPPED_TOKEN` — when the design references something the config doesn't cover). See [`./RESOLUTION.md`](./RESOLUTION.md) § Config-optional mode.
+
+**Delivery differs by branch:**
+
+- **Branch A (plugin)** reads it from `clientStorage`, populated by a one-time `npx figle sync` clipboard paste in the plugin's Settings tab.
+- **Branch B (MCP skill)** reads it directly from the file via Filesystem MCP at every `/figle` invocation.
 
 The authoritative schema is in `packages/spec-schema/src/config.ts`. This document explains it.
 

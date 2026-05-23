@@ -12,7 +12,7 @@ export default defineConfig({
   },
   overrides: [
     {
-      files: ["packages/bridge/src/**/*.ts"],
+      files: ["packages/bridge/src/**/*.ts", "packages/mcp-preset/src/**/*.ts"],
       rules: {
         "no-console": "off",
       },

@@ -46,7 +46,7 @@ Listed in expected order. Each phase becomes scope once the previous one is stab
 
 ### Phase 10 — MCP preset (Branch B)
 
-Skill / slash command for Claude Code or Cursor, powered by Figma Dev Mode MCP server and a Filesystem MCP. Requires a Figma Dev seat. Reuses `spec-schema` and the agent prompt template. See `PLAN.md` § Phase 10 and [`./ARCHITECTURE.md`](./ARCHITECTURE.md) § Branch B.
+Skill for Claude Code / Cursor / Windsurf, powered by the Figma Dev Mode MCP server and a Filesystem MCP. Requires a paid Figma Developer seat. Reuses `PROMPT_TEMPLATE` from `spec-schema` and `figle.config.ts` (when present). **Does not produce an intermediate `Spec`** — the agent consumes Figma MCP output directly. See `PLAN.md` § Phase 10 and [`./ARCHITECTURE.md`](./ARCHITECTURE.md) § Branch B for the architectural pivot away from the original adapter design.
 
 ### Phase 11 — Component state specs
 
