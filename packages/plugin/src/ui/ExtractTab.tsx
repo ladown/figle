@@ -15,6 +15,7 @@ import type {
   ExtractResultHandler,
   ExtractResultPayload,
 } from "../events.js";
+import { copyTextToClipboard } from "./copy.js";
 
 export function ExtractTab() {
   const [state, setState] = useState<ExtractResultPayload | null>(null);
@@ -38,8 +39,8 @@ export function ExtractTab() {
 
   const onCopy = async () => {
     if (!state?.ok) return;
-    await navigator.clipboard.writeText(JSON.stringify(state.spec, null, 2));
-    setCopied(true);
+    const ok = await copyTextToClipboard(JSON.stringify(state.spec, null, 2));
+    setCopied(ok);
   };
 
   return (
