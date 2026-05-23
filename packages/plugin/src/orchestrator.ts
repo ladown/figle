@@ -5,7 +5,7 @@ import { serialize, type SerializeMeta } from "./serialize/index.js";
 
 export async function runPipeline(
   node: SceneNode,
-  config: BridgeConfig,
+  config: BridgeConfig | null,
   meta: SerializeMeta,
 ): Promise<Spec> {
   const raw = await walkNode(node);
@@ -14,7 +14,7 @@ export async function runPipeline(
 
 export function runFromRaw(
   raw: RawNode,
-  config: BridgeConfig,
+  config: BridgeConfig | null,
   meta: SerializeMeta,
 ): Spec {
   const { root, warnings } = resolve(raw, config);

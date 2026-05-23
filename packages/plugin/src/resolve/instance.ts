@@ -8,7 +8,7 @@ export function lookupComponent(
   ctx: ResolveContext,
   node: RawNode,
 ): { key: string; descriptor: ComponentDescriptor } | null {
-  if (!node.instance) return null;
+  if (!ctx.config || !node.instance) return null;
   const setName = node.instance.componentSetName;
   if (setName && ctx.config.components[setName]) {
     return { key: setName, descriptor: ctx.config.components[setName] };
@@ -20,7 +20,7 @@ export function lookupComponent(
   return null;
 }
 
-export function resolveInstance(
+export function resolveMappedInstance(
   ctx: ResolveContext,
   node: RawNode,
   descriptor: ComponentDescriptor,
@@ -36,6 +36,40 @@ export function resolveInstance(
     _meta: { nodeId: node.id, nodePath: ctx.currentPath() },
   };
   if (children && children.length > 0) out.children = children;
+  return out;
+}
+
+export function resolvePassthroughInstance(
+  node: RawNode,
+  resolveChild: (child: RawNode) => ResolvedNode,
+  enterChild: (name: string) => void,
+  exitChild: () => void,
+  meta: { nodeId: string; nodePath: string },
+): ResolvedComponentRef {
+  const instance = node.instance;
+  const compName =
+    instance?.componentSetName ?? instance?.mainComponentName ?? node.name;
+  const props: Record<string, PropValue> = {};
+  if (instance?.variantProperties) {
+    for (const [k, v] of Object.entries(instance.variantProperties)) {
+      props[k] = v;
+    }
+  }
+  const out: ResolvedComponentRef = {
+    $component: compName,
+    props,
+    _meta: meta,
+  };
+  if (node.children && node.children.length > 0) {
+    out.children = node.children
+      .filter((c) => c.visible !== false)
+      .map((child) => {
+        enterChild(child.name);
+        const r = resolveChild(child);
+        exitChild();
+        return r;
+      });
+  }
   return out;
 }
 

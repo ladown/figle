@@ -33,12 +33,12 @@ Discriminated by the presence of `$component` (ComponentRef) or by `$type` (`'la
 
 ### `ComponentRef`
 
-A Figma component instance that resolved to a project component.
+A Figma component instance.
 
 ```ts
 type ComponentRef = {
-  $component: string; // e.g. 'UiButton'
-  importPath: string; // e.g. '@/components/UiButton.vue'
+  $component: string; // e.g. 'UiButton' (mapped) or 'Button' (zero-config)
+  importPath?: string; // e.g. '@/components/UiButton.vue'; omitted in zero-config mode
   props: Record<string, PropValue>;
   children?: SpecNode[]; // direct text children, when applicable
   slots?: Record<string, SpecNode[]>; // named slots, when the bridge config marks them
@@ -49,11 +49,12 @@ type PropValue = string | number | boolean | TokenRef;
 
 Rules:
 
-- `$component` is the **project-side** name (the `as:` field in the bridge config), not the Figma component name.
-- `props` keys are project-side prop names (after `propMap` translation).
-- `children` is reserved for the default slot only and only when the producer can confidently identify a single content slot (typical case: a button label).
+- `$component` is the **project-side** name (the `as:` field in the bridge config) when the config maps the instance, otherwise the **Figma-side** component (or component-set) name.
+- `importPath` is **only emitted** when the bridge config provides a mapping. Without a mapping the field is absent and the IDE agent picks an import based on the project's existing components.
+- `props` keys are project-side prop names after `propMap` translation when mapped; in zero-config mode they are the raw Figma `variantProperties` keys.
+- `children` is reserved for the default slot when the bridge config marks it (typical case: a button label). In zero-config mode the producer treats every direct child of the instance as a default-slot child.
 - `slots` is for components with multiple named slots. Each entry maps a slot name (project-side) to an array of nodes.
-- The producer must NOT recurse into instance internals beyond declared slots. The internals belong to the project component.
+- With a config, the producer must NOT recurse into instance internals beyond declared slots. The internals belong to the project component.
 
 ### `LayoutNode`
 
@@ -92,7 +93,7 @@ type LayoutNode = {
 
 Rules:
 
-- `semantic` is a soft hint based on naming and structure. Never authoritative. The IDE agent may use it for HTML element selection (e.g., `semantic: 'nav'` → `<nav>`).
+- `semantic` is an optional, opt-in hint. The plugin **does not** emit it by default (no name-regex or font-size heuristics — see [`./RESOLUTION.md`](./RESOLUTION.md) § Semantic hints). The field stays in the schema for future config-driven hints.
 - `layout.direction` is required even when there's only one child — the IDE agent uses it to decide flex vs block.
 - Numeric values are always in pixels. Token references should be preferred whenever a bound variable exists.
 
@@ -186,8 +187,7 @@ Resulting `Spec` (for the `DemoCard` fixture in `PLAN.md` § Verification):
       {
         "$type": "text",
         "content": "Welcome",
-        "typography": { "$token": "typography.heading.lg" },
-        "semantic": "heading-2"
+        "typography": { "$token": "typography.heading.lg" }
       },
       {
         "$component": "UiButton",

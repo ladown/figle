@@ -9,7 +9,6 @@
       {
         "$type": "text",
         "content": "Welcome",
-        "semantic": "heading-1",
         "typography": { "$token": "typography.heading.lg" }
       },
       {

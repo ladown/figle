@@ -35,9 +35,9 @@ function stripMeta(node: ResolvedNode): SpecNode {
   if ("$component" in node) {
     const out: ComponentRef = {
       $component: node.$component,
-      importPath: node.importPath,
       props: node.props,
     };
+    if (node.importPath !== undefined) out.importPath = node.importPath;
     if (node.children) out.children = node.children.map(stripMeta);
     if (node.slots) {
       const slots: Record<string, SpecNode[]> = {};

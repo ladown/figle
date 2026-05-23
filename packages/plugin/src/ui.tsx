@@ -5,7 +5,6 @@ import {
   type TabsOption,
   VerticalSpace,
 } from "@create-figma-plugin/ui";
-import { h } from "preact";
 import { useState } from "preact/hooks";
 import { SettingsTab } from "./ui/SettingsTab.js";
 import { ExtractTab } from "./ui/ExtractTab.js";
@@ -21,14 +20,27 @@ function Plugin() {
   ];
 
   return (
-    <Container space="medium">
-      <VerticalSpace space="small" />
-      <Tabs
-        options={options}
-        value={tab}
-        onValueChange={(value) => setTab(value as TabValue)}
-      />
-    </Container>
+    <div
+      style={{
+        height: "100vh",
+        display: "flex",
+        flexDirection: "column",
+        overflow: "hidden",
+      }}
+    >
+      <Container space="medium">
+        <VerticalSpace space="small" />
+      </Container>
+      <div style={{ flex: 1, overflowY: "auto", overflowX: "hidden" }}>
+        <Container space="medium">
+          <Tabs
+            options={options}
+            value={tab}
+            onValueChange={(value) => setTab(value as TabValue)}
+          />
+        </Container>
+      </div>
+    </div>
   );
 }
 

@@ -34,19 +34,42 @@ describe("resolveText", () => {
     expect(warnings[0]?.code).toBe("UNBOUND_TYPOGRAPHY");
   });
 
-  it("infers heading semantics from large font size", () => {
+  it("does not infer semantic from font size", () => {
     const { root } = resolve(
       textNode("Title", {
         text: {
           content: "Title",
           typography: {
             fontName: { family: "Inter", style: "Bold" },
-            fontSize: 32,
+            fontSize: 64,
           },
         },
       }),
       demoConfig,
     );
-    expect(root).toMatchObject({ semantic: "heading-1" });
+    expect(root).not.toHaveProperty("semantic");
+  });
+
+  it("zero-config: uses Figma variable path as token", () => {
+    const node = textNode("Hi", {
+      text: {
+        content: "Hi",
+        typography: {
+          fontName: { family: "Inter", style: "Regular" },
+          fontSize: 16,
+          boundVariable: {
+            type: "VARIABLE_ALIAS",
+            id: "v1",
+            name: "body/md",
+            collection: "typography",
+          },
+        },
+      },
+    });
+    const { root, warnings } = resolve(node, null);
+    expect(warnings).toEqual([]);
+    expect(root).toMatchObject({
+      typography: { $token: "typography/body/md" },
+    });
   });
 });

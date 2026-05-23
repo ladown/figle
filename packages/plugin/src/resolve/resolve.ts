@@ -2,9 +2,12 @@ import type { BridgeConfig } from "@figle/spec-schema";
 import type { RawNode } from "../extract/index.js";
 import { resolvePaint } from "./colors.js";
 import { ResolveContext } from "./context.js";
-import { lookupComponent, resolveInstance } from "./instance.js";
+import {
+  lookupComponent,
+  resolveMappedInstance,
+  resolvePassthroughInstance,
+} from "./instance.js";
 import { resolveLayoutShape } from "./layout.js";
-import { inferLayoutSemantic } from "./semantics.js";
 import { resolveText } from "./text.js";
 import type {
   ResolveResult,
@@ -12,7 +15,10 @@ import type {
   ResolvedNode,
 } from "./types.js";
 
-export function resolve(root: RawNode, config: BridgeConfig): ResolveResult {
+export function resolve(
+  root: RawNode,
+  config: BridgeConfig | null,
+): ResolveResult {
   const ctx = new ResolveContext(config);
   ctx.enter(root.name);
   const resolved = resolveNode(ctx, root);
@@ -28,7 +34,16 @@ function resolveNode(ctx: ResolveContext, node: RawNode): ResolvedNode {
   if (node.instance) {
     const match = lookupComponent(ctx, node);
     if (match) {
-      return resolveInstance(ctx, node, match.descriptor, resolveNode);
+      return resolveMappedInstance(ctx, node, match.descriptor, resolveNode);
+    }
+    if (!ctx.config) {
+      return resolvePassthroughInstance(
+        node,
+        (child) => resolveNode(ctx, child),
+        (name) => ctx.enter(name),
+        () => ctx.exit(),
+        { nodeId: node.id, nodePath: ctx.currentPath() },
+      );
     }
     ctx.warn(
       node,
@@ -51,9 +66,6 @@ function resolveLayout(ctx: ResolveContext, node: RawNode): ResolvedLayoutNode {
     children: [],
     _meta: { nodeId: node.id, nodePath: ctx.currentPath() },
   };
-
-  const semantic = inferLayoutSemantic(node);
-  if (semantic) out.semantic = semantic;
 
   const background = resolvePaint(
     ctx,

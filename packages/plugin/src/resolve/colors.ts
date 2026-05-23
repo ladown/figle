@@ -14,23 +14,25 @@ export function resolvePaint(
   if (paint.type !== "SOLID") return undefined;
 
   if (paint.boundVariable) {
-    const ref = lookupVariable(ctx, paint.boundVariable);
-    if (ref) return ref;
+    const { ref, mapped } = lookupVariable(ctx, paint.boundVariable);
+    if (mapped) return ref;
     ctx.warn(
       node,
       "UNMAPPED_TOKEN",
       `Figma variable "${paint.boundVariable.name}" has no mapping in bridge config`,
     );
+    return ref;
   }
 
   if (styleName) {
-    const ref = lookupStyle(ctx, styleName);
-    if (ref) return ref;
+    const { ref, mapped } = lookupStyle(ctx, styleName);
+    if (mapped) return ref;
     ctx.warn(
       node,
       "UNMAPPED_TOKEN",
       `Figma style "${styleName}" has no mapping in bridge config`,
     );
+    return ref;
   }
 
   ctx.warn(

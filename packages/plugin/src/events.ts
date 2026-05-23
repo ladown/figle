@@ -16,6 +16,11 @@ export interface ConfigSaveHandler extends EventHandler {
   handler: (blob: BridgeConfigBlob) => void;
 }
 
+export interface ConfigClearHandler extends EventHandler {
+  name: "CONFIG_CLEAR";
+  handler: () => void;
+}
+
 export interface ExtractRequestHandler extends EventHandler {
   name: "EXTRACT_REQUEST";
   handler: () => void;

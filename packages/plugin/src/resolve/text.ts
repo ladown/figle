@@ -1,6 +1,5 @@
 import type { RawNode } from "../extract/index.js";
 import type { ResolveContext } from "./context.js";
-import { inferTextSemantic } from "./semantics.js";
 import { lookupStyle, lookupVariable } from "./tokens.js";
 import type { ResolvedTextNode } from "./types.js";
 
@@ -22,10 +21,9 @@ export function resolveText(
   const tyStyle = node.text.typography.textStyleName;
 
   if (tyVar) {
-    const ref = lookupVariable(ctx, tyVar);
-    if (ref) {
-      out.typography = ref;
-    } else {
+    const { ref, mapped } = lookupVariable(ctx, tyVar);
+    out.typography = ref;
+    if (!mapped) {
       ctx.warn(
         node,
         "UNMAPPED_TOKEN",
@@ -33,10 +31,9 @@ export function resolveText(
       );
     }
   } else if (tyStyle) {
-    const ref = lookupStyle(ctx, tyStyle);
-    if (ref) {
-      out.typography = ref;
-    } else {
+    const { ref, mapped } = lookupStyle(ctx, tyStyle);
+    out.typography = ref;
+    if (!mapped) {
       ctx.warn(
         node,
         "UNMAPPED_TOKEN",
@@ -50,9 +47,6 @@ export function resolveText(
       `Text "${node.name}" uses ad-hoc font properties`,
     );
   }
-
-  const semantic = inferTextSemantic(node);
-  if (semantic) out.semantic = semantic;
 
   return out;
 }

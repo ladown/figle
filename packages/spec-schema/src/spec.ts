@@ -86,7 +86,7 @@ const SizeSchema = z.object({
 
 export type ComponentRef = {
   $component: string;
-  importPath: string;
+  importPath?: string | undefined;
   props: Record<string, PropValue>;
   children?: SpecNode[] | undefined;
   slots?: Record<string, SpecNode[]> | undefined;
@@ -119,7 +119,7 @@ export const SpecNodeSchema: z.ZodType<SpecNode> = z.lazy(() =>
 export const ComponentRefSchema: z.ZodType<ComponentRef> = z.lazy(() =>
   z.object({
     $component: z.string().min(1),
-    importPath: z.string().min(1),
+    importPath: z.string().min(1).optional(),
     props: z.record(z.string(), PropValueSchema),
     children: z.array(SpecNodeSchema).optional(),
     slots: z.record(z.string(), z.array(SpecNodeSchema)).optional(),

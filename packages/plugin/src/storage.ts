@@ -17,6 +17,10 @@ export async function saveStoredConfig(blob: BridgeConfigBlob): Promise<void> {
   await figma.clientStorage.setAsync(STORAGE_KEY, blob);
 }
 
+export async function clearStoredConfig(): Promise<void> {
+  await figma.clientStorage.deleteAsync(STORAGE_KEY);
+}
+
 export function parseConfigBlob(
   input: string,
 ): { ok: true; blob: BridgeConfigBlob } | { ok: false; error: string } {

@@ -116,8 +116,11 @@ function SpecPanel({ json }: { json: string }) {
         style={{
           fontSize: 10,
           lineHeight: "14px",
-          maxHeight: 320,
-          overflow: "auto",
+          userSelect: "text",
+          cursor: "text",
+          whiteSpace: "pre",
+          overflowX: "auto",
+          overflowY: "visible",
           background: "var(--figma-color-bg-secondary)",
           padding: 8,
           borderRadius: 4,

@@ -39,4 +39,18 @@ describe("resolveInstance", () => {
     expect(warnings[0]?.code).toBe("UNKNOWN_COMPONENT");
     expect(root).toMatchObject({ $type: "layout" });
   });
+
+  it("zero-config: passes through unmapped instance with figma name, no UNKNOWN_COMPONENT", () => {
+    const { root, warnings } = resolve(
+      instanceNode("Mystery", { State: "hover" }, [textNode("hi")]),
+      null,
+    );
+    expect(warnings.some((w) => w.code === "UNKNOWN_COMPONENT")).toBe(false);
+    expect(root).toMatchObject({
+      $component: "Mystery",
+      props: { State: "hover" },
+      children: [{ $type: "text", content: "hi" }],
+    });
+    expect(root).not.toHaveProperty("importPath");
+  });
 });

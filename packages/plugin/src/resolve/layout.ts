@@ -3,6 +3,13 @@ import type { RawAutoLayout, RawNode } from "../extract/index.js";
 import type { ResolveContext } from "./context.js";
 import { lookupVariable } from "./tokens.js";
 
+type SpacingField =
+  | "gap"
+  | "padding-top"
+  | "padding-right"
+  | "padding-bottom"
+  | "padding-left";
+
 export function resolveLayoutShape(
   ctx: ResolveContext,
   node: RawNode,
@@ -16,6 +23,7 @@ export function resolveLayoutShape(
     layout.gap = resolveSpacing(
       ctx,
       node,
+      "gap",
       auto.itemSpacing,
       auto.itemSpacingVar,
     );
@@ -31,24 +39,28 @@ export function resolveLayoutShape(
       top: resolveSpacing(
         ctx,
         node,
+        "padding-top",
         auto.paddingTop ?? 0,
         auto.paddingVars?.top,
       ),
       right: resolveSpacing(
         ctx,
         node,
+        "padding-right",
         auto.paddingRight ?? 0,
         auto.paddingVars?.right,
       ),
       bottom: resolveSpacing(
         ctx,
         node,
+        "padding-bottom",
         auto.paddingBottom ?? 0,
         auto.paddingVars?.bottom,
       ),
       left: resolveSpacing(
         ctx,
         node,
+        "padding-left",
         auto.paddingLeft ?? 0,
         auto.paddingVars?.left,
       ),
@@ -69,27 +81,30 @@ export function resolveLayoutShape(
 function resolveSpacing(
   ctx: ResolveContext,
   node: RawNode,
+  field: SpacingField,
   value: number,
   alias: { name: string; collection?: string } | undefined,
 ): TokenRef | number {
   if (alias) {
-    const ref = lookupVariable(ctx, {
+    const { ref, mapped } = lookupVariable(ctx, {
       type: "VARIABLE_ALIAS",
       id: "",
       name: alias.name,
       ...(alias.collection ? { collection: alias.collection } : {}),
     });
-    if (ref) return ref;
+    if (mapped) return ref;
     ctx.warn(
       node,
       "UNMAPPED_TOKEN",
-      `Spacing variable "${alias.name}" has no mapping in bridge config`,
+      `Spacing variable "${alias.name}" (${field}) has no mapping in bridge config`,
     );
-  } else if (value > 0) {
+    return ref;
+  }
+  if (value > 0) {
     ctx.warn(
       node,
       "UNBOUND_SPACING",
-      `Spacing on "${node.name}" uses a literal value`,
+      `${field} on "${node.name}" uses a literal value (${value}px)`,
     );
   }
   return value;

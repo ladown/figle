@@ -98,6 +98,8 @@ Lives in the user's project as `figle.config.ts`. Maps:
 
 See [`./BRIDGE_CONFIG.md`](./BRIDGE_CONFIG.md) for the full schema.
 
+**The config is optional.** Without it the plugin still produces a valid `Spec`: Figma-side names (variable paths, component names) are preserved as-is and the IDE agent resolves them against the project. Warnings are not emitted in this mode — without a config the plugin has no opinion to enforce. With a config the plugin pre-translates names into project-side aliases and emits both mapping warnings (`UNKNOWN_COMPONENT`, `UNMAPPED_TOKEN`) and hygiene warnings (`UNBOUND_*`).
+
 **Branch A** delivers the config via a one-time paste into `figma.clientStorage`. A version hash in the config surfaces "config out of date" banners in the plugin UI.
 
 **Branch B** does not use this config at all — the agent reads project files directly via Filesystem MCP.

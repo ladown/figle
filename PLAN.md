@@ -197,8 +197,7 @@ The smallest demo that proves the architecture:
     {
       "$type": "text",
       "content": "Welcome",
-      "typography": { "$token": "typography.heading.lg" },
-      "semantic": "heading-2"
+      "typography": { "$token": "typography.heading.lg" }
     },
     {
       "$component": "UiButton",

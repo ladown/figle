@@ -2,7 +2,17 @@
 
 This document specifies how each Figma node is turned into a `SpecNode`. The algorithm runs in `packages/plugin/src/resolve/`. Branch B (MCP preset) implements the same rules in its adapter.
 
-The input is a `RawNode` (the IR produced by `extract/`) plus the `BridgeConfig`. The output is a `ResolvedNode` and zero or more `Warning`s appended to a shared accumulator.
+The input is a `RawNode` (the IR produced by `extract/`) plus an **optional** `BridgeConfig`. The output is a `ResolvedNode` and zero or more `Warning`s appended to a shared accumulator.
+
+## Config-optional mode
+
+Bridge config is optional. Without it the plugin still produces a valid `Spec`:
+
+- **Component instances** become `ComponentRef`s whose `$component` is the raw Figma component (or component-set) name, with `importPath` omitted. `props` carry the Figma `variantProperties` unchanged.
+- **Bound variables / styles** become `TokenRef`s whose `$token` is the full Figma path (e.g. `color/primary/500`).
+- **No warnings are emitted.** Without a config the plugin has no opinion on what should be bound to what, so neither mapping warnings (`UNKNOWN_COMPONENT`, `UNMAPPED_TOKEN`, `AMBIGUOUS_VARIANT`) nor hygiene warnings (`UNBOUND_*`) are useful — they would just add noise to a quick extraction.
+
+With a config, the same steps below run end-to-end and produce project-side names instead of Figma-side ones.
 
 ## Order of checks (per node)
 
@@ -55,16 +65,15 @@ If neither a variable nor a style is bound:
 
 This is the **designer hygiene signal**. The spec still includes the value — the warning tells the designer (or the IDE agent) that this was ad-hoc.
 
-### 6. Semantic hints
+### 6. Semantic hints — intentionally not inferred by the plugin
 
-Run after structural resolution. Inspect node name and structure:
+The plugin **does not** emit `semantic` on `LayoutNode` or `TextNode`. The field stays in the `Spec` schema as an optional opt-in (for future config-driven hints), but no regex over layer names and no font-size buckets are applied. Reasoning:
 
-- `/card/i` in name → `semantic: 'card'`
-- `/btn|button/i` → would-be `semantic: 'button'`, but if it had been a real button it would've matched step 1; in practice this means the layer is named "Button" but isn't a component → log it as a hint and let the IDE agent decide.
-- A single text child with large font weight → `semantic: 'heading-1'` / `'heading-2'` based on font size buckets.
-- Frames named `Section`, `Header`, `Footer`, `Nav` → corresponding semantic.
+- Layer-naming conventions are project-specific. A hard-coded `/heading-1|h1/` regex would either misfire or be silently wrong on any other convention.
+- Font-size → heading-level mapping imposes a type scale the plugin has no way of knowing.
+- The IDE agent already has the project's `CLAUDE.md`, existing components, and real type scale. It is the right place to decide whether a text node is an `<h1>` or just emphasized body text.
 
-Hints are advisory, never authoritative. The IDE agent may override them based on context.
+If the user wants project-specific hints in the future, the path is a config-driven map (e.g. `semanticHints: { "heading-1": "Heading/XL" }`), added post-MVP.
 
 ## Slot recursion
 

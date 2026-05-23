@@ -5,20 +5,30 @@ import type { ResolveContext } from "./context.js";
 export function lookupVariable(
   ctx: ResolveContext,
   alias: RawVariableAlias,
-): TokenRef | null {
+): { ref: TokenRef; mapped: boolean } {
   const key = canonicalVariableKey(alias);
+  if (!ctx.config) {
+    return { ref: { $token: key }, mapped: true };
+  }
   const path = ctx.config.tokens[key] ?? ctx.config.tokens[alias.name];
-  if (!path) return null;
-  return { $token: path };
+  if (path) {
+    return { ref: { $token: path }, mapped: true };
+  }
+  return { ref: { $token: key }, mapped: false };
 }
 
 export function lookupStyle(
   ctx: ResolveContext,
   styleName: string,
-): TokenRef | null {
+): { ref: TokenRef; mapped: boolean } {
+  if (!ctx.config) {
+    return { ref: { $token: styleName }, mapped: true };
+  }
   const path = ctx.config.tokens[styleName];
-  if (!path) return null;
-  return { $token: path };
+  if (path) {
+    return { ref: { $token: path }, mapped: true };
+  }
+  return { ref: { $token: styleName }, mapped: false };
 }
 
 function canonicalVariableKey(alias: RawVariableAlias): string {

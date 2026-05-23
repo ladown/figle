@@ -1,7 +1,12 @@
 import { emit, on, showUI } from "@create-figma-plugin/utilities";
 import { runPipeline } from "./orchestrator.js";
-import { loadStoredConfig, saveStoredConfig } from "./storage.js";
+import {
+  clearStoredConfig,
+  loadStoredConfig,
+  saveStoredConfig,
+} from "./storage.js";
 import type {
+  ConfigClearHandler,
   ConfigGetHandler,
   ConfigSaveHandler,
   ConfigState,
@@ -25,6 +30,11 @@ export default function main(): void {
     });
   });
 
+  on<ConfigClearHandler>("CONFIG_CLEAR", async () => {
+    await clearStoredConfig();
+    emit<ConfigStateHandler>("CONFIG_STATE", { configured: false });
+  });
+
   on<ExtractRequestHandler>("EXTRACT_REQUEST", async () => {
     const payload = await handleExtract();
     emit<ExtractResultHandler>("EXTRACT_RESULT", payload);
@@ -40,19 +50,13 @@ async function readConfigState(): Promise<ConfigState> {
 }
 
 async function handleExtract(): Promise<ExtractResultPayload> {
-  const blob = await loadStoredConfig();
-  if (!blob) {
-    return {
-      ok: false,
-      error: "No bridge config. Paste it in the Settings tab first.",
-    };
-  }
   const [node] = figma.currentPage.selection;
   if (!node) {
     return { ok: false, error: "Select a frame, then run Extract." };
   }
+  const blob = await loadStoredConfig();
   try {
-    const spec = await runPipeline(node, blob.config, {
+    const spec = await runPipeline(node, blob?.config ?? null, {
       figmaFileKey: figma.fileKey ?? figma.root.id,
       extractedAt: new Date().toISOString(),
     });
