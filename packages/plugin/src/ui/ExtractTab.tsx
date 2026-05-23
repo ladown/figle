@@ -17,6 +17,8 @@ import type {
 } from "../events.js";
 import { copyTextToClipboard } from "./copy.js";
 
+const COPIED_RESET_MS = 5000;
+
 export function ExtractTab() {
   const [state, setState] = useState<ExtractResultPayload | null>(null);
   const [busy, setBusy] = useState(false);
@@ -36,6 +38,12 @@ export function ExtractTab() {
     setCopied(false);
     emit<ExtractRequestHandler>("EXTRACT_REQUEST");
   };
+
+  useEffect(() => {
+    if (!copied) return;
+    const id = setTimeout(() => setCopied(false), COPIED_RESET_MS);
+    return () => clearTimeout(id);
+  }, [copied]);
 
   const onCopy = async () => {
     if (!state?.ok) return;
