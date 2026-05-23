@@ -2,7 +2,7 @@
 
 Figma → structured `Spec` → IDE agent → Vue/TS/Tailwind code.
 
-> Status: **early / pre-MVP**. Architecture finalized in [`PLAN.md`](./PLAN.md). Implementation has not started.
+> Status: **MVP complete.** The end-to-end pipeline (Figma plugin → `Spec` → `npx figle paste` → IDE agent → Vue SFC) is verified on the `DemoCard` fixture; the generated reference SFC lives at [`examples/demo-vue-app/src/components/DemoCard.vue`](./examples/demo-vue-app/src/components/DemoCard.vue). See [`PLAN.md`](./PLAN.md) for the original plan and [`docs/ROADMAP.md`](./docs/ROADMAP.md) for post-MVP phases.
 
 ## What this is
 
@@ -81,14 +81,15 @@ figle/
 
 ## Status & roadmap
 
-This is a personal pet project. The MVP target is the smallest end-to-end demo described in `PLAN.md` § Verification: a single `DemoCard` Figma frame with one nested `Button` instance and one tokenized text node, producing a clean Vue SFC via Claude Code.
+Personal pet project. **MVP is complete** — the smallest end-to-end demo described in `PLAN.md` § Verification (a `DemoCard` Figma frame with a tokenized text node and a nested `Button` instance) produces a clean Vue SFC via Claude Code. The generated reference output is committed at [`examples/demo-vue-app/src/components/DemoCard.vue`](./examples/demo-vue-app/src/components/DemoCard.vue).
 
-After MVP:
+Next:
 
+- **Phase 10** — MCP preset (Branch B) for users with a Figma Dev seat — see [`docs/ROADMAP.md`](./docs/ROADMAP.md).
 - Pilot on real designs, harden the resolution algorithm against edge cases.
-- Component state specs via MDX docs ingestion.
-- Visual diff testing (Playwright).
-- Additional target stacks (React, Svelte).
+- Component state specs via MDX docs ingestion (Phase 11).
+- Visual diff testing via Playwright (Phase 12).
+- Additional target stacks — React, Svelte (Phase 13).
 
 ## License
 

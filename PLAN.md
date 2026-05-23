@@ -176,6 +176,8 @@ The template is plain text, not interpolated server-side. The `bridge` CLI subst
 
 ## Verification — minimal e2e
 
+> **Status: PASSED** on 2026-05-23. The Figma plugin produced the expected `Spec`, `npx figle paste` materialized it, and Claude Code generated [`examples/demo-vue-app/src/components/DemoCard.vue`](./examples/demo-vue-app/src/components/DemoCard.vue) — imports correct, props passed, token+fallback used, warnings surfaced as `<!-- TODO -->` comments.
+
 The smallest demo that proves the architecture:
 
 **Figma file**: one `DemoCard` Frame containing:
