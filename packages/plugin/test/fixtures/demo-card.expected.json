@@ -13,7 +13,17 @@
       },
       {
         "$component": "UiButton",
-        "children": [{ "$type": "text", "content": "Get started" }],
+        "children": [
+          {
+            "$type": "text",
+            "content": "Get started",
+            "typography": {
+              "fontFamily": "Inter",
+              "fontSize": 14,
+              "fontStyle": "Medium"
+            }
+          }
+        ],
         "importPath": "@/components/UiButton.vue",
         "props": { "size": "md", "variant": "primary" }
       }

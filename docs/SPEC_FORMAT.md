@@ -97,13 +97,30 @@ Rules:
 - `layout.direction` is required even when there's only one child — the IDE agent uses it to decide flex vs block.
 - Numeric values are always in pixels. Token references should be preferred whenever a bound variable exists.
 
+### `TypographyProps`
+
+Raw font properties, emitted on `TextNode.typography` when no Figma variable or text style is bound. Same union pattern as `LayoutNode.background` (`TokenRef | string`).
+
+```ts
+type TypographyProps = {
+  fontFamily: string; // e.g. 'Inter'
+  fontStyle?: string; // e.g. 'Regular', 'Bold'
+  fontWeight?: number; // numeric weight when reported by Figma
+  fontSize: number; // px
+  lineHeight?: number; // px, only when Figma reports PIXELS
+  letterSpacing?: number; // px
+};
+```
+
+Consumers discriminate `typography` against `TokenRef` by the presence of `$token`.
+
 ### `TextNode`
 
 ```ts
 type TextNode = {
   $type: "text";
   content: string;
-  typography?: TokenRef;
+  typography?: TokenRef | TypographyProps;
   color?: TokenRef | string;
   semantic?:
     | "heading-1"
@@ -120,8 +137,8 @@ type TextNode = {
 Rules:
 
 - `content` is the literal text. Multi-line text retains newlines as `\n`.
-- `typography` references a bound text style or composite typography variable.
-- If both `typography` and individual properties (font size, weight, etc.) are needed, prefer `typography` alone — individual properties go in the bridge config behind the token.
+- `typography` is a `TokenRef` when a Figma variable or text style is bound; otherwise the producer emits raw `TypographyProps` so the IDE agent can still render the text with the correct font.
+- `color` follows the same pattern as `LayoutNode.background`: `TokenRef` when bound, hex string when ad-hoc, omitted when no fill.
 
 ## Token references
 

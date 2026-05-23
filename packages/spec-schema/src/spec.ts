@@ -102,10 +102,28 @@ export type LayoutNode = {
   children: SpecNode[];
 };
 
+export type TypographyProps = {
+  fontFamily: string;
+  fontStyle?: string | undefined;
+  fontWeight?: number | undefined;
+  fontSize: number;
+  lineHeight?: number | undefined;
+  letterSpacing?: number | undefined;
+};
+
+export const TypographyPropsSchema = z.object({
+  fontFamily: z.string().min(1),
+  fontStyle: z.string().optional(),
+  fontWeight: z.number().positive().optional(),
+  fontSize: z.number().positive(),
+  lineHeight: z.number().nonnegative().optional(),
+  letterSpacing: z.number().optional(),
+});
+
 export type TextNode = {
   $type: "text";
   content: string;
-  typography?: TokenRef | undefined;
+  typography?: TokenRef | TypographyProps | undefined;
   color?: TokenRef | string | undefined;
   semantic?: z.infer<typeof TextSemanticSchema> | undefined;
 };
@@ -142,7 +160,7 @@ export const TextNodeSchema: z.ZodType<TextNode> = z.lazy(() =>
   z.object({
     $type: z.literal("text"),
     content: z.string(),
-    typography: TokenRefSchema.optional(),
+    typography: z.union([TokenRefSchema, TypographyPropsSchema]).optional(),
     color: z.union([TokenRefSchema, z.string()]).optional(),
     semantic: TextSemanticSchema.optional(),
   }),

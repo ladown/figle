@@ -1,4 +1,6 @@
-import type { RawNode } from "../extract/index.js";
+import type { TypographyProps } from "@figle/spec-schema";
+import type { RawNode, RawTypography } from "../extract/index.js";
+import { resolvePaint } from "./colors.js";
 import type { ResolveContext } from "./context.js";
 import { lookupStyle, lookupVariable } from "./tokens.js";
 import type { ResolvedTextNode } from "./types.js";
@@ -41,6 +43,7 @@ export function resolveText(
       );
     }
   } else {
+    out.typography = toTypographyProps(node.text.typography);
     ctx.warn(
       node,
       "UNBOUND_TYPOGRAPHY",
@@ -48,5 +51,39 @@ export function resolveText(
     );
   }
 
+  const color = resolvePaint(
+    ctx,
+    node,
+    node.fills?.[0],
+    node.fillStyleName,
+    "color",
+  );
+  if (color !== undefined) out.color = color;
+
   return out;
+}
+
+function toTypographyProps(raw: RawTypography): TypographyProps {
+  const props: TypographyProps = {
+    fontFamily: raw.fontName.family,
+    fontSize: raw.fontSize,
+  };
+  if (raw.fontName.style) props.fontStyle = raw.fontName.style;
+  if (typeof raw.fontWeight === "number") props.fontWeight = raw.fontWeight;
+  const lh = normalizeLineHeight(raw.lineHeight);
+  if (lh !== undefined) props.lineHeight = lh;
+  if (typeof raw.letterSpacing === "number") {
+    props.letterSpacing = raw.letterSpacing;
+  }
+  return props;
+}
+
+function normalizeLineHeight(
+  lh: RawTypography["lineHeight"],
+): number | undefined {
+  if (!lh) return undefined;
+  if (typeof lh === "number") return lh;
+  if (typeof lh !== "object") return undefined;
+  if (lh.unit === "PIXELS" && "value" in lh) return lh.value;
+  return undefined;
 }

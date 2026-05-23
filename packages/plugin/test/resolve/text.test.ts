@@ -28,10 +28,26 @@ describe("resolveText", () => {
     });
   });
 
-  it("emits UNBOUND_TYPOGRAPHY when no binding is present", () => {
-    const { warnings } = resolve(textNode("Welcome"), demoConfig);
+  it("emits UNBOUND_TYPOGRAPHY and raw typography props when no binding is present", () => {
+    const { root, warnings } = resolve(textNode("Welcome"), demoConfig);
     expect(warnings).toHaveLength(1);
     expect(warnings[0]?.code).toBe("UNBOUND_TYPOGRAPHY");
+    expect(root).toMatchObject({
+      typography: {
+        fontFamily: "Inter",
+        fontStyle: "Regular",
+        fontSize: 16,
+      },
+    });
+  });
+
+  it("extracts text color from solid fill when no binding", () => {
+    const node = textNode("Hello", {
+      fills: [{ type: "SOLID", color: { r: 1, g: 0, b: 0 } }],
+    });
+    const { root, warnings } = resolve(node, demoConfig);
+    expect(root).toMatchObject({ color: "#ff0000" });
+    expect(warnings.some((w) => w.code === "UNBOUND_COLOR")).toBe(true);
   });
 
   it("does not infer semantic from font size", () => {
