@@ -1,10 +1,13 @@
 import type {
   ComponentRef,
+  IconNode,
+  ImageNode,
   LayoutNode,
   SpecNode,
   TextNode,
   Warning,
 } from "@figle/spec-schema";
+import type { RawAsset } from "../extract/index.js";
 
 export type ResolveMeta = {
   nodeId: string;
@@ -22,10 +25,22 @@ export type ResolvedLayoutNode = Omit<LayoutNode, "children"> & {
 };
 export type ResolvedTextNode = TextNode & { _meta: ResolveMeta };
 
+export type ResolvedIconNode = Omit<IconNode, "src"> & {
+  _meta: ResolveMeta;
+  _asset: RawAsset;
+};
+
+export type ResolvedImageNode = Omit<ImageNode, "src"> & {
+  _meta: ResolveMeta;
+  _asset?: RawAsset;
+};
+
 export type ResolvedNode =
   | ResolvedComponentRef
   | ResolvedLayoutNode
-  | ResolvedTextNode;
+  | ResolvedTextNode
+  | ResolvedIconNode
+  | ResolvedImageNode;
 
 export type ResolveResult = {
   root: ResolvedNode;

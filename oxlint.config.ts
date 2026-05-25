@@ -9,6 +9,7 @@ export default defineConfig({
   },
   rules: {
     "no-console": "warn",
+    "no-underscore-dangle": ["warn", { allow: ["_meta", "_asset"] }],
   },
   overrides: [
     {

@@ -56,11 +56,17 @@ async function handleExtract(): Promise<ExtractResultPayload> {
   }
   const blob = await loadStoredConfig();
   try {
-    const spec = await runPipeline(node, blob?.config ?? null, {
+    const meta = {
       figmaFileKey: figma.fileKey ?? figma.root.id,
+      nodeId: node.id,
+      nodeName: node.name,
+      ...("width" in node && "height" in node
+        ? { width: node.width, height: node.height }
+        : {}),
       extractedAt: new Date().toISOString(),
-    });
-    return { ok: true, spec, warnings: spec.warnings };
+    };
+    const payload = await runPipeline(node, blob?.config ?? null, meta);
+    return { ok: true, payload, warnings: payload.spec.warnings };
   } catch (err) {
     return {
       ok: false,

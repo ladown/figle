@@ -1,5 +1,5 @@
 import type { BridgeConfig } from "@figle/spec-schema";
-import type { RawNode } from "../extract/index.js";
+import type { RawAsset, RawNode } from "../extract/index.js";
 import { resolvePaint } from "./colors.js";
 import { ResolveContext } from "./context.js";
 import {
@@ -11,6 +11,8 @@ import { resolveLayoutShape } from "./layout.js";
 import { resolveText } from "./text.js";
 import type {
   ResolveResult,
+  ResolvedIconNode,
+  ResolvedImageNode,
   ResolvedLayoutNode,
   ResolvedNode,
 } from "./types.js";
@@ -27,6 +29,14 @@ export function resolve(
 }
 
 function resolveNode(ctx: ResolveContext, node: RawNode): ResolvedNode {
+  if (node.asset) {
+    return resolveAsset(ctx, node, node.asset);
+  }
+
+  if (node.imageOversize) {
+    return resolveOversizedImage(ctx, node, node.imageOversize);
+  }
+
   if (node.text) {
     return resolveText(ctx, node);
   }
@@ -88,4 +98,48 @@ function resolveLayout(ctx: ResolveContext, node: RawNode): ResolvedLayoutNode {
   }
 
   return out;
+}
+
+function resolveAsset(
+  ctx: ResolveContext,
+  node: RawNode,
+  asset: RawAsset,
+): ResolvedIconNode | ResolvedImageNode {
+  const meta = { nodeId: node.id, nodePath: ctx.currentPath() };
+  const size = node.size
+    ? { width: node.size.width, height: node.size.height }
+    : undefined;
+  if (asset.kind === "icon") {
+    const out: ResolvedIconNode = {
+      $type: "icon",
+      name: node.name,
+      _asset: asset,
+      _meta: meta,
+    };
+    if (size) out.size = size;
+    return out;
+  }
+  if (!size) {
+    throw new Error(`Image node ${node.id} has no size`);
+  }
+  return {
+    $type: "image",
+    name: node.name,
+    size,
+    _asset: asset,
+    _meta: meta,
+  };
+}
+
+function resolveOversizedImage(
+  ctx: ResolveContext,
+  node: RawNode,
+  size: { width: number; height: number },
+): ResolvedImageNode {
+  return {
+    $type: "image",
+    name: node.name,
+    size,
+    _meta: { nodeId: node.id, nodePath: ctx.currentPath() },
+  };
 }

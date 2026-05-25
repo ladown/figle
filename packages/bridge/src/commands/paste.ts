@@ -1,11 +1,13 @@
 import { mkdir, writeFile } from "node:fs/promises";
-import { resolve } from "node:path";
+import { dirname, resolve } from "node:path";
 import clipboard from "clipboardy";
 import {
+  SpecCopyPayloadSchema,
   SpecSchema,
   renderPrompt,
   sortKeysDeep,
   type Spec,
+  type SpecCopyPayload,
 } from "@figle/spec-schema";
 
 export async function runPaste(cwd: string): Promise<void> {
@@ -24,34 +26,84 @@ export async function runPaste(cwd: string): Promise<void> {
     process.exit(1);
   }
 
-  const result = SpecSchema.safeParse(parsed);
-  if (!result.success) {
-    console.error("figle: clipboard payload does not match Spec schema.");
-    for (const issue of result.error.issues) {
-      console.error(`  ${issue.path.join(".") || "<root>"}: ${issue.message}`);
-    }
-    process.exit(1);
-  }
-
-  const spec: Spec = result.data;
-  const sorted = sortKeysDeep(spec);
+  const payload = parsePayload(parsed);
   const outDir = resolve(cwd, ".figle");
   await mkdir(outDir, { recursive: true });
 
   const specPath = resolve(outDir, "last-spec.json");
-  await writeFile(specPath, `${JSON.stringify(sorted, null, 2)}\n`, "utf8");
+  const sortedSpec = sortKeysDeep(payload.spec);
+  await writeFile(specPath, `${JSON.stringify(sortedSpec, null, 2)}\n`, "utf8");
+  console.log(`figle: wrote ${specPath}`);
+
+  await Promise.all(
+    payload.assets.map(async (asset) => {
+      const dest = resolve(outDir, "assets", asset.path);
+      await mkdir(dirname(dest), { recursive: true });
+      await writeFile(dest, Buffer.from(asset.base64, "base64"));
+    }),
+  );
+  if (payload.assets.length > 0) {
+    console.log(
+      `figle: wrote ${payload.assets.length} asset(s) to ${resolve(outDir, "assets")}`,
+    );
+  }
 
   const promptPath = resolve(outDir, "PROMPT.md");
-  const prompt = renderPrompt({
+  const promptBody = renderPrompt({
     stack: "vue3-ts-tailwind",
     specPath: ".figle/last-spec.json",
-    warningsCount: spec.warnings.length,
+    warningsCount: payload.spec.warnings.length,
   });
-  await writeFile(promptPath, prompt, "utf8");
-
-  console.log(`figle: wrote ${specPath}`);
+  await writeFile(
+    promptPath,
+    buildPromptHeader(payload.spec) + promptBody,
+    "utf8",
+  );
   console.log(`figle: wrote ${promptPath}`);
-  if (spec.warnings.length > 0) {
-    console.log(`figle: ${spec.warnings.length} warning(s) in spec`);
+
+  if (payload.spec.warnings.length > 0) {
+    console.log(`figle: ${payload.spec.warnings.length} warning(s) in spec`);
   }
+}
+
+function parsePayload(input: unknown): SpecCopyPayload {
+  const newFmt = SpecCopyPayloadSchema.safeParse(input);
+  if (newFmt.success) return newFmt.data;
+
+  const legacySpec = SpecSchema.safeParse(input);
+  if (legacySpec.success) {
+    return {
+      payloadVersion: "0.1",
+      spec: legacySpec.data,
+      assets: [],
+    };
+  }
+
+  console.error("figle: clipboard payload does not match Spec schema.");
+  for (const issue of newFmt.error.issues.slice(0, 5)) {
+    console.error(`  ${issue.path.join(".") || "<root>"}: ${issue.message}`);
+  }
+  process.exit(1);
+}
+
+function buildPromptHeader(spec: Spec): string {
+  const { meta } = spec;
+  const name = meta.nodeName ?? "Figma fragment";
+  const sizeSuffix =
+    meta.width !== undefined && meta.height !== undefined
+      ? ` (${Math.round(meta.width)}×${Math.round(meta.height)})`
+      : "";
+  const lines = [`# ${name}${sizeSuffix}`];
+  const url = sourceUrl(meta.figmaFileKey, meta.nodeId);
+  if (url) lines.push(`Figma source: ${url}`);
+  lines.push("", "---", "");
+  return `${lines.join("\n")}\n`;
+}
+
+function sourceUrl(fileKey: string, nodeId: string | undefined): string | null {
+  if (!fileKey || fileKey === "0:0") return null;
+  const base = `https://www.figma.com/design/${encodeURIComponent(fileKey)}/`;
+  if (!nodeId) return `${base}?m=dev`;
+  const dashed = nodeId.replaceAll(":", "-");
+  return `${base}?node-id=${dashed}&m=dev`;
 }

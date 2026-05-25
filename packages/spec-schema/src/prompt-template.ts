@@ -34,6 +34,15 @@ it into one Vue Single-File Component.
   conventions.
 - Pass a \`ComponentRef\`'s \`props\` through directly to the project component.
   Pass \`children\` and \`slots\` to their respective Vue slots.
+- \`IconNode\` (\`{ "$type": "icon" }\`): the SVG file lives at
+  \`.figle/assets/<src>\`. Inline it into the SFC, or import it as an asset —
+  whichever the project conventions prefer. The \`name\` field hints at the
+  semantic meaning (use it for \`aria-label\`).
+- \`ImageNode\` (\`{ "$type": "image" }\`): if \`src\` is present, the PNG is at
+  \`.figle/assets/<src>\` — emit \`<img src="…" alt="…" />\` with the recorded
+  \`size\`. If \`src\` is **absent**, the image exceeded the plugin's export
+  cap — emit a placeholder \`<img src="" alt="…" />\` with a
+  \`<!-- TODO -->\` and surface the source in chat.
 
 ## Warnings
 

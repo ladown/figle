@@ -47,7 +47,7 @@ export function ExtractTab() {
 
   const onCopy = async () => {
     if (!state?.ok) return;
-    const ok = await copyTextToClipboard(JSON.stringify(state.spec, null, 2));
+    const ok = await copyTextToClipboard(JSON.stringify(state.payload));
     setCopied(ok);
   };
 
@@ -77,10 +77,23 @@ export function ExtractTab() {
           {state.error}
         </Banner>
       )}
+      {state?.ok && state.payload.assets.length > 0 && (
+        <div>
+          <VerticalSpace space="small" />
+          <Text>
+            <Muted>
+              {state.payload.assets.length} asset
+              {state.payload.assets.length === 1 ? "" : "s"} bundled
+            </Muted>
+          </Text>
+        </div>
+      )}
       {state?.ok && state.warnings.length > 0 && (
         <WarningsPanel warnings={state.warnings} />
       )}
-      {state?.ok && <SpecPanel json={JSON.stringify(state.spec, null, 2)} />}
+      {state?.ok && (
+        <SpecPanel json={JSON.stringify(state.payload.spec, null, 2)} />
+      )}
       <VerticalSpace space="medium" />
     </div>
   );

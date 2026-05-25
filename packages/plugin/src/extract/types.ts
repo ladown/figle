@@ -62,6 +62,12 @@ export type RawSize = {
   verticalSizing?: "FIXED" | "HUG" | "FILL";
 };
 
+export type RawAsset = {
+  kind: "icon" | "image";
+  format: "svg" | "png";
+  bytes: Uint8Array;
+};
+
 export type RawNode = {
   id: string;
   name: string;
@@ -85,5 +91,7 @@ export type RawNode = {
     variantProperties?: Record<string, string>;
     componentProperties?: Record<string, { type: string; value: unknown }>;
   };
+  asset?: RawAsset;
+  imageOversize?: { width: number; height: number };
   children?: RawNode[];
 };

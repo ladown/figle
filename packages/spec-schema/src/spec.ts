@@ -128,10 +128,58 @@ export type TextNode = {
   semantic?: z.infer<typeof TextSemanticSchema> | undefined;
 };
 
-export type SpecNode = ComponentRef | LayoutNode | TextNode;
+export type IconNode = {
+  $type: "icon";
+  name: string;
+  src: string;
+  size?: { width: number; height: number } | undefined;
+};
+
+export type ImageNode = {
+  $type: "image";
+  name: string;
+  src?: string | undefined;
+  size: { width: number; height: number };
+};
+
+export type SpecNode =
+  | ComponentRef
+  | LayoutNode
+  | TextNode
+  | IconNode
+  | ImageNode;
 
 export const SpecNodeSchema: z.ZodType<SpecNode> = z.lazy(() =>
-  z.union([ComponentRefSchema, LayoutNodeSchema, TextNodeSchema]),
+  z.union([
+    ComponentRefSchema,
+    LayoutNodeSchema,
+    TextNodeSchema,
+    IconNodeSchema,
+    ImageNodeSchema,
+  ]),
+);
+
+const AssetSizeSchema = z.object({
+  width: z.number().positive(),
+  height: z.number().positive(),
+});
+
+export const IconNodeSchema: z.ZodType<IconNode> = z.lazy(() =>
+  z.object({
+    $type: z.literal("icon"),
+    name: z.string().min(1),
+    src: z.string().min(1),
+    size: AssetSizeSchema.optional(),
+  }),
+);
+
+export const ImageNodeSchema: z.ZodType<ImageNode> = z.lazy(() =>
+  z.object({
+    $type: z.literal("image"),
+    name: z.string().min(1),
+    src: z.string().min(1).optional(),
+    size: AssetSizeSchema,
+  }),
 );
 
 export const ComponentRefSchema: z.ZodType<ComponentRef> = z.lazy(() =>
@@ -168,6 +216,10 @@ export const TextNodeSchema: z.ZodType<TextNode> = z.lazy(() =>
 
 export const SpecMetaSchema = z.object({
   figmaFileKey: z.string().min(1),
+  nodeId: z.string().min(1).optional(),
+  nodeName: z.string().min(1).optional(),
+  width: z.number().positive().optional(),
+  height: z.number().positive().optional(),
   extractedAt: z.iso.datetime(),
 });
 
@@ -181,3 +233,20 @@ export const SpecSchema = z.object({
 });
 
 export type Spec = z.infer<typeof SpecSchema>;
+
+export const SPEC_COPY_PAYLOAD_VERSION = "0.1" as const;
+
+export const SpecAssetSchema = z.object({
+  path: z.string().min(1),
+  base64: z.string().min(1),
+});
+
+export type SpecAsset = z.infer<typeof SpecAssetSchema>;
+
+export const SpecCopyPayloadSchema = z.object({
+  payloadVersion: z.literal(SPEC_COPY_PAYLOAD_VERSION),
+  spec: SpecSchema,
+  assets: z.array(SpecAssetSchema),
+});
+
+export type SpecCopyPayload = z.infer<typeof SpecCopyPayloadSchema>;

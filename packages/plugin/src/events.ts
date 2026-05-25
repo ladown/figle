@@ -1,4 +1,8 @@
-import type { BridgeConfigBlob, Spec, Warning } from "@figle/spec-schema";
+import type {
+  BridgeConfigBlob,
+  SpecCopyPayload,
+  Warning,
+} from "@figle/spec-schema";
 import type { EventHandler } from "@create-figma-plugin/utilities";
 
 export interface ConfigGetHandler extends EventHandler {
@@ -36,5 +40,5 @@ export type ConfigState =
   | { configured: true; hash: string };
 
 export type ExtractResultPayload =
-  | { ok: true; spec: Spec; warnings: Warning[] }
+  | { ok: true; payload: SpecCopyPayload; warnings: Warning[] }
   | { ok: false; error: string };

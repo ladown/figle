@@ -55,11 +55,88 @@ export async function walkNode(node: SceneNode): Promise<RawNode> {
     raw.instance = await extractInstance(node);
   }
 
+  if (await tryExtractIcon(node, raw)) {
+    return raw;
+  }
+
+  if (await tryExtractImage(node, raw)) {
+    return raw;
+  }
+
   if ("children" in node && Array.isArray(node.children)) {
     raw.children = await Promise.all(node.children.map(walkNode));
   }
 
   return raw;
+}
+
+const IMAGE_TARGET_SIZE = 1024;
+const ICON_MAX_BYTES = 100 * 1024;
+const IMAGE_MAX_BYTES = 500 * 1024;
+
+async function tryExtractIcon(node: SceneNode, raw: RawNode): Promise<boolean> {
+  if (!isIconCandidate(node, raw)) return false;
+  try {
+    const bytes = await node.exportAsync({ format: "SVG" });
+    if (bytes.byteLength > ICON_MAX_BYTES) {
+      // Probably an illustration, not an icon — fall through to layout.
+      return false;
+    }
+    raw.asset = { kind: "icon", format: "svg", bytes };
+    return true;
+  } catch {
+    return false;
+  }
+}
+
+async function tryExtractImage(
+  node: SceneNode,
+  raw: RawNode,
+): Promise<boolean> {
+  if (!isImageNode(node)) return false;
+  const width = "width" in node ? node.width : 0;
+  const height = "height" in node ? node.height : 0;
+  if (!width || !height) {
+    raw.imageOversize = { width, height };
+    return true;
+  }
+  const scale =
+    Math.max(width, height) > IMAGE_TARGET_SIZE
+      ? IMAGE_TARGET_SIZE / Math.max(width, height)
+      : 1;
+  try {
+    const bytes = await node.exportAsync({
+      format: "PNG",
+      constraint: { type: "SCALE", value: scale },
+    });
+    if (bytes.byteLength > IMAGE_MAX_BYTES) {
+      raw.imageOversize = { width, height };
+      return true;
+    }
+    raw.asset = { kind: "image", format: "png", bytes };
+    return true;
+  } catch {
+    raw.imageOversize = { width, height };
+    return true;
+  }
+}
+
+function isIconCandidate(node: SceneNode, raw: RawNode): boolean {
+  if (node.type === "VECTOR" || node.type === "BOOLEAN_OPERATION") return true;
+  if (/icon/i.test(node.name)) return true;
+  if (
+    node.type === "INSTANCE" &&
+    raw.instance &&
+    /icon/i.test(raw.instance.mainComponentName)
+  ) {
+    return true;
+  }
+  return false;
+}
+
+function isImageNode(node: SceneNode): boolean {
+  if (!("fills" in node) || !Array.isArray(node.fills)) return false;
+  return (node.fills as readonly Paint[]).some((p) => p.type === "IMAGE");
 }
 
 function extractSize(

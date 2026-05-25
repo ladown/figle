@@ -16,10 +16,15 @@ const expected = JSON.parse(
 );
 
 describe("orchestrator: DemoCard fixture", () => {
-  it("produces the expected Spec byte-for-byte after sorting keys", () => {
-    const spec = runFromRaw(demoCardRaw, demoCardConfig, DEMO_CARD_META);
-    expect(JSON.stringify(sortKeysDeep(spec))).toBe(
+  it("produces the expected Spec byte-for-byte after sorting keys", async () => {
+    const payload = await runFromRaw(
+      demoCardRaw,
+      demoCardConfig,
+      DEMO_CARD_META,
+    );
+    expect(JSON.stringify(sortKeysDeep(payload.spec))).toBe(
       JSON.stringify(sortKeysDeep(expected)),
     );
+    expect(payload.assets).toEqual([]);
   });
 });
