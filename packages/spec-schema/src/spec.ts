@@ -245,7 +245,7 @@ export type SpecAsset = z.infer<typeof SpecAssetSchema>;
 
 export const SpecCopyPayloadSchema = z.object({
   payloadVersion: z.literal(SPEC_COPY_PAYLOAD_VERSION),
-  spec: SpecSchema,
+  specs: z.array(SpecSchema).min(1),
   assets: z.array(SpecAssetSchema),
 });
 

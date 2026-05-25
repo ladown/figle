@@ -7,8 +7,10 @@ import {
   type IconNode,
   type ImageNode,
   type LayoutNode,
+  type Spec,
   type SpecAsset,
   type SpecCopyPayload,
+  type SpecMeta,
   type SpecNode,
   type TextNode,
   type Warning,
@@ -25,46 +27,57 @@ export type SerializeMeta = {
   extractedAt: string;
 };
 
+export type SerializeInput = {
+  root: ResolvedNode;
+  warnings: Warning[];
+  meta: SerializeMeta;
+};
+
 type AssetCollector = {
   byHash: Map<string, { path: string; base64: string }>;
-  slugCounts: Map<string, number>;
 };
 
 export async function serialize(
-  root: ResolvedNode,
-  warnings: Warning[],
-  meta: SerializeMeta,
+  inputs: SerializeInput[],
 ): Promise<SpecCopyPayload> {
+  if (inputs.length === 0) {
+    throw new Error("serialize: at least one input is required");
+  }
   const collector: AssetCollector = {
     byHash: new Map(),
-    slugCounts: new Map(),
   };
-  const specRoot = await stripMeta(root, collector);
-  const specMeta: SpecCopyPayload["spec"]["meta"] = {
-    figmaFileKey: meta.figmaFileKey,
-    extractedAt: meta.extractedAt,
-  };
-  if (meta.nodeId) specMeta.nodeId = meta.nodeId;
-  if (meta.nodeName) specMeta.nodeName = meta.nodeName;
-  if (meta.width) specMeta.width = meta.width;
-  if (meta.height) specMeta.height = meta.height;
 
-  const spec = {
-    version: SPEC_VERSION,
-    root: specRoot,
-    warnings,
-    meta: specMeta,
-  };
+  const specs: Spec[] = await Promise.all(
+    inputs.map(async (input) => ({
+      version: SPEC_VERSION,
+      root: await stripMeta(input.root, collector),
+      warnings: input.warnings,
+      meta: buildMeta(input.meta),
+    })),
+  );
+
   const assets: SpecAsset[] = [...collector.byHash.values()].toSorted((a, b) =>
     a.path < b.path ? -1 : a.path > b.path ? 1 : 0,
   );
 
   const payload = sortKeysDeep({
     payloadVersion: SPEC_COPY_PAYLOAD_VERSION,
-    spec,
+    specs,
     assets,
   });
   return SpecCopyPayloadSchema.parse(payload);
+}
+
+function buildMeta(meta: SerializeMeta): SpecMeta {
+  const out: SpecMeta = {
+    figmaFileKey: meta.figmaFileKey,
+    extractedAt: meta.extractedAt,
+  };
+  if (meta.nodeId) out.nodeId = meta.nodeId;
+  if (meta.nodeName) out.nodeName = meta.nodeName;
+  if (meta.width) out.width = meta.width;
+  if (meta.height) out.height = meta.height;
+  return out;
 }
 
 async function stripMeta(
@@ -147,8 +160,6 @@ async function registerAsset(
 
   const dir = asset.kind === "icon" ? "icons" : "images";
   const slug = slugify(rawName) || asset.kind;
-  const count = assets.slugCounts.get(slug) ?? 0;
-  assets.slugCounts.set(slug, count + 1);
   const suffix = hashHex.slice(0, 6);
   const path = `${dir}/${slug}-${suffix}.${asset.format}`;
   const base64 = bytesToBase64(asset.bytes);

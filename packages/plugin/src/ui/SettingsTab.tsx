@@ -5,6 +5,7 @@ import {
   Muted,
   Text,
   TextboxMultiline,
+  Toggle,
   VerticalSpace,
 } from "@create-figma-plugin/ui";
 import { emit, on } from "@create-figma-plugin/utilities";
@@ -16,17 +17,27 @@ import type {
   ConfigSaveHandler,
   ConfigState,
   ConfigStateHandler,
+  ExtractPrefs,
+  PrefsGetHandler,
+  PrefsSetHandler,
+  PrefsStateHandler,
 } from "../events.js";
 
 export function SettingsTab() {
   const [state, setState] = useState<ConfigState>({ configured: false });
+  const [prefs, setPrefs] = useState<ExtractPrefs>({ multi: false });
   const [input, setInput] = useState("");
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    const off = on<ConfigStateHandler>("CONFIG_STATE", setState);
+    const offConfig = on<ConfigStateHandler>("CONFIG_STATE", setState);
+    const offPrefs = on<PrefsStateHandler>("PREFS_STATE", setPrefs);
     emit<ConfigGetHandler>("CONFIG_GET");
-    return off;
+    emit<PrefsGetHandler>("PREFS_GET");
+    return () => {
+      offConfig();
+      offPrefs();
+    };
   }, []);
 
   const onSave = () => {
@@ -38,6 +49,11 @@ export function SettingsTab() {
     setError(null);
     setInput("");
     emit<ConfigSaveHandler>("CONFIG_SAVE", result.blob);
+  };
+
+  const onMultiToggle = (multi: boolean) => {
+    setPrefs({ multi });
+    emit<PrefsSetHandler>("PREFS_SET", { multi });
   };
 
   return (
@@ -91,6 +107,17 @@ export function SettingsTab() {
           <Muted>No config saved. Plugin runs in zero-config mode.</Muted>
         </Text>
       )}
+      <VerticalSpace space="medium" />
+      <Toggle value={prefs.multi} onValueChange={onMultiToggle}>
+        <Text>Extract multiple at once</Text>
+      </Toggle>
+      <VerticalSpace space="extraSmall" />
+      <Text>
+        <Muted>
+          When enabled, selecting several frames runs Extract on all of them and
+          bundles the results into one paste.
+        </Muted>
+      </Text>
       <VerticalSpace space="medium" />
     </div>
   );

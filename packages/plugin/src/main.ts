@@ -1,8 +1,10 @@
 import { emit, on, showUI } from "@create-figma-plugin/utilities";
-import { runPipeline } from "./orchestrator.js";
+import { runPipeline, type PipelineInput } from "./orchestrator.js";
 import {
   clearStoredConfig,
+  loadExtractPreferences,
   loadStoredConfig,
+  saveExtractPreferences,
   saveStoredConfig,
 } from "./storage.js";
 import type {
@@ -14,6 +16,9 @@ import type {
   ExtractRequestHandler,
   ExtractResultHandler,
   ExtractResultPayload,
+  PrefsGetHandler,
+  PrefsSetHandler,
+  PrefsStateHandler,
 } from "./events.js";
 
 export default function main(): void {
@@ -35,6 +40,16 @@ export default function main(): void {
     emit<ConfigStateHandler>("CONFIG_STATE", { configured: false });
   });
 
+  on<PrefsGetHandler>("PREFS_GET", async () => {
+    const prefs = await loadExtractPreferences();
+    emit<PrefsStateHandler>("PREFS_STATE", prefs);
+  });
+
+  on<PrefsSetHandler>("PREFS_SET", async (prefs) => {
+    await saveExtractPreferences(prefs);
+    emit<PrefsStateHandler>("PREFS_STATE", prefs);
+  });
+
   on<ExtractRequestHandler>("EXTRACT_REQUEST", async () => {
     const payload = await handleExtract();
     emit<ExtractResultHandler>("EXTRACT_RESULT", payload);
@@ -50,23 +65,35 @@ async function readConfigState(): Promise<ConfigState> {
 }
 
 async function handleExtract(): Promise<ExtractResultPayload> {
-  const [node] = figma.currentPage.selection;
-  if (!node) {
-    return { ok: false, error: "Select a frame, then run Extract." };
+  const selection = figma.currentPage.selection;
+  if (selection.length === 0) {
+    return { ok: false, error: "Select at least one frame, then run Extract." };
   }
+
+  const prefs = await loadExtractPreferences();
+  const targets =
+    prefs.multi && selection.length > 1 ? [...selection] : [selection[0]!];
+
   const blob = await loadStoredConfig();
+  const extractedAt = new Date().toISOString();
+  const figmaFileKey = figma.fileKey ?? figma.root.id;
+
   try {
-    const meta = {
-      figmaFileKey: figma.fileKey ?? figma.root.id,
-      nodeId: node.id,
-      nodeName: node.name,
-      ...("width" in node && "height" in node
-        ? { width: node.width, height: node.height }
-        : {}),
-      extractedAt: new Date().toISOString(),
-    };
-    const payload = await runPipeline(node, blob?.config ?? null, meta);
-    return { ok: true, payload, warnings: payload.spec.warnings };
+    const inputs: PipelineInput[] = targets.map((node) => ({
+      node,
+      meta: {
+        figmaFileKey,
+        nodeId: node.id,
+        nodeName: node.name,
+        ...("width" in node && "height" in node
+          ? { width: node.width, height: node.height }
+          : {}),
+        extractedAt,
+      },
+    }));
+    const payload = await runPipeline(inputs, blob?.config ?? null);
+    const warnings = payload.specs.flatMap((s) => s.warnings);
+    return { ok: true, payload, warnings };
   } catch (err) {
     return {
       ok: false,

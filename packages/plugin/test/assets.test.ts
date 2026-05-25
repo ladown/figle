@@ -68,9 +68,9 @@ describe("assets in SpecCopyPayload", () => {
       iconNode("arrow-left", SVG_A, { id: "n1" }),
       iconNode("Arrow Left Copy", SVG_A, { id: "n2" }),
     ]);
-    const payload = await runFromRaw(root, null, META);
+    const payload = await runFromRaw([{ raw: root, meta: META }], null);
     expect(payload.assets).toHaveLength(1);
-    const children = (payload.spec.root as { children: { src: string }[] })
+    const children = (payload.specs[0]!.root as { children: { src: string }[] })
       .children;
     expect(children[0]?.src).toBe(children[1]?.src);
     expect(payload.assets[0]?.path).toBe(children[0]?.src);
@@ -81,7 +81,7 @@ describe("assets in SpecCopyPayload", () => {
       iconNode("arrow-left", SVG_A, { id: "n1" }),
       iconNode("arrow-right", SVG_B, { id: "n2" }),
     ]);
-    const payload = await runFromRaw(root, null, META);
+    const payload = await runFromRaw([{ raw: root, meta: META }], null);
     expect(payload.assets).toHaveLength(2);
     const paths = payload.assets.map((a) => a.path);
     expect(new Set(paths).size).toBe(2);
@@ -91,9 +91,9 @@ describe("assets in SpecCopyPayload", () => {
     const root = layoutNode([
       imageNode("hero", { width: 4000, height: 3000 }, { oversize: true }),
     ]);
-    const payload = await runFromRaw(root, null, META);
+    const payload = await runFromRaw([{ raw: root, meta: META }], null);
     expect(payload.assets).toEqual([]);
-    const image = (payload.spec.root as { children: unknown[] })
+    const image = (payload.specs[0]!.root as { children: unknown[] })
       .children[0] as {
       $type: string;
       src?: string;
@@ -108,10 +108,10 @@ describe("assets in SpecCopyPayload", () => {
     const root = layoutNode([
       imageNode("thumb", { width: 200, height: 200 }, PNG_A),
     ]);
-    const payload = await runFromRaw(root, null, META);
+    const payload = await runFromRaw([{ raw: root, meta: META }], null);
     expect(payload.assets).toHaveLength(1);
     expect(payload.assets[0]?.path).toMatch(/^images\/thumb-[0-9a-f]{6}\.png$/);
-    const image = (payload.spec.root as { children: unknown[] })
+    const image = (payload.specs[0]!.root as { children: unknown[] })
       .children[0] as {
       $type: string;
       src: string;

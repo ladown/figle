@@ -21,6 +21,29 @@ export async function clearStoredConfig(): Promise<void> {
   await figma.clientStorage.deleteAsync(STORAGE_KEY);
 }
 
+const PREFS_KEY = "figle.extract-preferences";
+
+export type ExtractPreferences = {
+  multi: boolean;
+};
+
+const DEFAULT_PREFS: ExtractPreferences = { multi: false };
+
+export async function loadExtractPreferences(): Promise<ExtractPreferences> {
+  const raw = await figma.clientStorage.getAsync(PREFS_KEY);
+  if (raw === undefined || raw === null || typeof raw !== "object") {
+    return DEFAULT_PREFS;
+  }
+  const multi = (raw as { multi?: unknown }).multi === true;
+  return { multi };
+}
+
+export async function saveExtractPreferences(
+  prefs: ExtractPreferences,
+): Promise<void> {
+  await figma.clientStorage.setAsync(PREFS_KEY, prefs);
+}
+
 export function parseConfigBlob(
   input: string,
 ): { ok: true; blob: BridgeConfigBlob } | { ok: false; error: string } {

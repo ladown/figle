@@ -18,13 +18,29 @@ const expected = JSON.parse(
 describe("orchestrator: DemoCard fixture", () => {
   it("produces the expected Spec byte-for-byte after sorting keys", async () => {
     const payload = await runFromRaw(
-      demoCardRaw,
+      [{ raw: demoCardRaw, meta: DEMO_CARD_META }],
       demoCardConfig,
-      DEMO_CARD_META,
     );
-    expect(JSON.stringify(sortKeysDeep(payload.spec))).toBe(
+    expect(payload.specs).toHaveLength(1);
+    expect(JSON.stringify(sortKeysDeep(payload.specs[0]))).toBe(
       JSON.stringify(sortKeysDeep(expected)),
     );
     expect(payload.assets).toEqual([]);
+  });
+
+  it("multi: produces one payload with multiple specs sharing deduped assets", async () => {
+    const payload = await runFromRaw(
+      [
+        { raw: demoCardRaw, meta: DEMO_CARD_META },
+        {
+          raw: demoCardRaw,
+          meta: { ...DEMO_CARD_META, nodeId: "1:99", nodeName: "DemoCard2" },
+        },
+      ],
+      demoCardConfig,
+    );
+    expect(payload.specs).toHaveLength(2);
+    expect(payload.specs[0]?.meta.nodeName).toBeUndefined();
+    expect(payload.specs[1]?.meta.nodeName).toBe("DemoCard2");
   });
 });

@@ -25,6 +25,25 @@ export interface ConfigClearHandler extends EventHandler {
   handler: () => void;
 }
 
+export interface PrefsGetHandler extends EventHandler {
+  name: "PREFS_GET";
+  handler: () => void;
+}
+
+export interface PrefsStateHandler extends EventHandler {
+  name: "PREFS_STATE";
+  handler: (prefs: ExtractPrefs) => void;
+}
+
+export interface PrefsSetHandler extends EventHandler {
+  name: "PREFS_SET";
+  handler: (prefs: ExtractPrefs) => void;
+}
+
+export type ExtractPrefs = {
+  multi: boolean;
+};
+
 export interface ExtractRequestHandler extends EventHandler {
   name: "EXTRACT_REQUEST";
   handler: () => void;

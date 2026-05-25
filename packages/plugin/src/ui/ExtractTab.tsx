@@ -77,13 +77,16 @@ export function ExtractTab() {
           {state.error}
         </Banner>
       )}
-      {state?.ok && state.payload.assets.length > 0 && (
+      {state?.ok && (
         <div>
           <VerticalSpace space="small" />
           <Text>
             <Muted>
-              {state.payload.assets.length} asset
-              {state.payload.assets.length === 1 ? "" : "s"} bundled
+              {state.payload.specs.length} frame
+              {state.payload.specs.length === 1 ? "" : "s"} extracted
+              {state.payload.assets.length > 0
+                ? `, ${state.payload.assets.length} asset${state.payload.assets.length === 1 ? "" : "s"} bundled`
+                : ""}
             </Muted>
           </Text>
         </div>
@@ -91,9 +94,7 @@ export function ExtractTab() {
       {state?.ok && state.warnings.length > 0 && (
         <WarningsPanel warnings={state.warnings} />
       )}
-      {state?.ok && (
-        <SpecPanel json={JSON.stringify(state.payload.spec, null, 2)} />
-      )}
+      {state?.ok && <SpecPanel json={JSON.stringify(state.payload, null, 2)} />}
       <VerticalSpace space="medium" />
     </div>
   );
