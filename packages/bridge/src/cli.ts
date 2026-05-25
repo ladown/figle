@@ -1,28 +1,37 @@
 #!/usr/bin/env node
-import { runSync } from "./commands/sync.js";
+import { runInit } from "./commands/init.js";
 import { runPaste } from "./commands/paste.js";
+import { runSync } from "./commands/sync.js";
 
 const USAGE = `figle — bridge between the Figma plugin and your project.
 
 Usage:
-  figle sync    Read figle.config.{ts,mts,js,mjs}, copy a hashed blob to clipboard.
-  figle paste   Read clipboard, validate as Spec, write .figle/last-spec.json + PROMPT.md.
+  figle init [--force]   Create figle.config.ts in the current directory.
+  figle sync             Read figle.config.{ts,mts,js,mjs}, copy a hashed blob to clipboard.
+  figle paste            Read clipboard, validate as Spec, write .figle/last-spec.json + PROMPT.md.
 `;
 
 async function main(): Promise<void> {
   const [command, ...rest] = process.argv.slice(2);
 
-  if (rest.length > 0) {
-    console.error(`figle: unexpected arguments: ${rest.join(" ")}`);
-    console.error(USAGE);
-    process.exit(1);
-  }
-
   switch (command) {
+    case "init": {
+      const force = rest.includes("--force");
+      const unknown = rest.filter((arg) => arg !== "--force");
+      if (unknown.length > 0) {
+        console.error(`figle: unexpected arguments: ${unknown.join(" ")}`);
+        console.error(USAGE);
+        process.exit(1);
+      }
+      await runInit(process.cwd(), { force });
+      return;
+    }
     case "sync":
+      assertNoArgs(rest);
       await runSync(process.cwd());
       return;
     case "paste":
+      assertNoArgs(rest);
       await runPaste(process.cwd());
       return;
     case undefined:
@@ -34,6 +43,14 @@ async function main(): Promise<void> {
       console.error(`figle: unknown command "${command}"`);
       console.error(USAGE);
       process.exit(1);
+  }
+}
+
+function assertNoArgs(args: string[]): void {
+  if (args.length > 0) {
+    console.error(`figle: unexpected arguments: ${args.join(" ")}`);
+    console.error(USAGE);
+    process.exit(1);
   }
 }
 
