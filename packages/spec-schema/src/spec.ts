@@ -102,10 +102,24 @@ const SizeSchema = z.object({
   height: z.union([z.number(), z.literal("fill"), z.literal("hug")]).optional(),
 });
 
+export type StateSnapshot = {
+  background?: TokenRef | string | undefined;
+  border?:
+    | {
+        color: TokenRef | string;
+        width: number;
+        radius: TokenRef | number;
+      }
+    | undefined;
+  color?: TokenRef | string | undefined;
+  opacity?: number | undefined;
+};
+
 export type ComponentRef = {
   $component: string;
   importPath?: string | undefined;
   props: Record<string, PropValue>;
+  states?: Record<string, StateSnapshot> | undefined;
   children?: SpecNode[] | undefined;
   slots?: Record<string, SpecNode[]> | undefined;
 };
@@ -182,11 +196,25 @@ export const ImageNodeSchema: z.ZodType<ImageNode> = z.lazy(() =>
   }),
 );
 
+export const StateSnapshotSchema: z.ZodType<StateSnapshot> = z.object({
+  background: z.union([TokenRefSchema, z.string()]).optional(),
+  border: z
+    .object({
+      color: z.union([TokenRefSchema, z.string()]),
+      width: z.number().nonnegative(),
+      radius: z.union([TokenRefSchema, z.number()]),
+    })
+    .optional(),
+  color: z.union([TokenRefSchema, z.string()]).optional(),
+  opacity: z.number().min(0).max(1).optional(),
+});
+
 export const ComponentRefSchema: z.ZodType<ComponentRef> = z.lazy(() =>
   z.object({
     $component: z.string().min(1),
     importPath: z.string().min(1).optional(),
     props: z.record(z.string(), PropValueSchema),
+    states: z.record(z.string(), StateSnapshotSchema).optional(),
     children: z.array(SpecNodeSchema).optional(),
     slots: z.record(z.string(), z.array(SpecNodeSchema)).optional(),
   }),

@@ -1,5 +1,10 @@
-import type { ComponentDescriptor, PropValue } from "@figle/spec-schema";
-import type { RawNode } from "../extract/index.js";
+import type {
+  ComponentDescriptor,
+  PropValue,
+  StateSnapshot,
+} from "@figle/spec-schema";
+import type { RawNode, RawStateSnapshot } from "../extract/index.js";
+import { resolvePaint } from "./colors.js";
 import type { ResolveContext } from "./context.js";
 import { resolveDefaultSlot } from "./slots.js";
 import type { ResolvedComponentRef, ResolvedNode } from "./types.js";
@@ -28,6 +33,7 @@ export function resolveMappedInstance(
 ): ResolvedComponentRef {
   const props = mapVariantProps(ctx, node, descriptor);
   const children = resolveDefaultSlot(ctx, node, descriptor, resolveChild);
+  const states = resolveStates(ctx, node);
 
   const out: ResolvedComponentRef = {
     $component: descriptor.as,
@@ -35,11 +41,13 @@ export function resolveMappedInstance(
     props,
     _meta: { nodeId: node.id, nodePath: ctx.currentPath() },
   };
+  if (states) out.states = states;
   if (children && children.length > 0) out.children = children;
   return out;
 }
 
 export function resolvePassthroughInstance(
+  ctx: ResolveContext,
   node: RawNode,
   resolveChild: (child: RawNode) => ResolvedNode,
   enterChild: (name: string) => void,
@@ -60,6 +68,8 @@ export function resolvePassthroughInstance(
     props,
     _meta: meta,
   };
+  const states = resolveStates(ctx, node);
+  if (states) out.states = states;
   if (node.children && node.children.length > 0) {
     out.children = node.children
       .filter((c) => c.visible !== false)
@@ -70,6 +80,57 @@ export function resolvePassthroughInstance(
         return r;
       });
   }
+  return out;
+}
+
+function resolveStates(
+  ctx: ResolveContext,
+  node: RawNode,
+): Record<string, StateSnapshot> | null {
+  const rawStates = node.instance?.states;
+  if (!rawStates) return null;
+  const result: Record<string, StateSnapshot> = {};
+  for (const [stateName, snap] of Object.entries(rawStates)) {
+    const resolved = resolveStateSnapshot(ctx, node, snap);
+    if (Object.keys(resolved).length > 0) {
+      result[stateName] = resolved;
+    }
+  }
+  return Object.keys(result).length > 0 ? result : null;
+}
+
+function resolveStateSnapshot(
+  ctx: ResolveContext,
+  node: RawNode,
+  snap: RawStateSnapshot,
+): StateSnapshot {
+  const out: StateSnapshot = {};
+  if (typeof snap.opacity === "number") out.opacity = snap.opacity;
+  const background = resolvePaint(
+    ctx,
+    node,
+    snap.fills?.[0],
+    snap.fillStyleName,
+    "background",
+  );
+  if (background !== undefined) out.background = background;
+
+  const borderColor = resolvePaint(
+    ctx,
+    node,
+    snap.strokes?.[0],
+    snap.strokeStyleName,
+    "border",
+  );
+  if (borderColor !== undefined && typeof snap.strokeWeight === "number") {
+    const radius = snap.corners?.uniform ?? 0;
+    out.border = {
+      color: borderColor,
+      width: snap.strokeWeight,
+      radius,
+    };
+  }
+
   return out;
 }
 

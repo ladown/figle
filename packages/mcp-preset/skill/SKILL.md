@@ -24,7 +24,7 @@ You are turning a Figma selection into a Vue 3 SFC. The Figma side is read via t
 
 ### Step 1 — read the Figma selection
 
-Call these tools on the user's current Figma selection. If they paste a Figma URL, extract the `node-id` from it and pass as `nodeId`:
+Call these tools on the user's current Figma selection. If they paste a Figma URL, extract both the `fileKey` (the path segment after `/design/`) and the `node-id` (the query param, converting `-` to `:`) — you'll need both for Tier 2 of component mapping below.
 
 - `mcp__Figma__get_design_context` — main signal: generated JSX + Tailwind for the selection.
 - `mcp__Figma__get_variable_defs` — flat map of Figma variable paths to their resolved values.
@@ -33,28 +33,65 @@ Call these tools on the user's current Figma selection. If they paste a Figma UR
 
 ### Step 2 — resolve the component map (tiered)
 
-Try in order, stop at the first hit:
+Build a single component-map for this run by **layering all sources you can reach, in priority order**. Earlier sources win on conflict; later sources fill the gaps. Each map entry maps a Figma identifier (component name or node id, depending on source) to `{ as, importPath }`.
 
-1. **`figle.config.ts`** in the project root. If it exists, read it as plain text (do not execute). Its `components: { ... }` block is the canonical Figma-name → project-component map, and its `tokens: { ... }` block is the canonical Figma-variable → project-token-path map. Same file the figle plugin uses — see `docs/BRIDGE_CONFIG.md` in the figle repo.
-2. **`mcp__Figma__get_code_connect_map`** — if the user has a paid Figma Developer seat, this returns a Code Connect mapping. Use it for component identification. (If it errors with "Developer seat" message, skip.)
-3. **`.figle/components-index.json`** — a cache you maintain. If the file exists and was written less than 24 hours ago AND no `src/components/**/*.vue` file has an `mtime` newer than the cache, use it as-is. Otherwise re-scan: glob `src/components/**/*.vue` (or whatever the project uses), read each, extract `name`, `path`, and `defineProps` signature. Write the index back. Format:
-   ```json
-   {
-     "version": "0.1",
-     "scannedAt": "<ISO-8601>",
-     "components": [
-       {
-         "name": "UiButton",
-         "path": "@/components/UiButton.vue",
-         "props": [
-           "variant: 'primary' | 'secondary'",
-           "size: 'sm' | 'md' | 'lg'"
-         ]
-       }
-     ]
-   }
-   ```
-4. **No mapping** — emit a `<!-- TODO: figma component "X" has no project mapping -->` comment and use the Figma name as the local component identifier.
+#### Tier 1 — `figle.config.ts` in the project root (highest priority)
+
+If it exists, read it as plain text (do not execute). Its `components: { ... }` block is the canonical Figma-name → project-component map; its `tokens: { ... }` block is the canonical Figma-variable → project-token-path map. Same file the figle plugin uses — see `docs/BRIDGE_CONFIG.md` in the figle repo.
+
+The `figle.config.ts` represents the user's **explicit decision** about how a Figma component maps to a project component. Treat it as authoritative — never override it with a different source.
+
+#### Tier 2 — `mcp__Figma__get_code_connect_map`
+
+If the user has a paid Figma Developer seat with Code Connect set up, this tool returns a map of Figma node ids to their connected codebase components.
+
+**Call shape:**
+
+- Required params: `nodeId` (e.g. `"1:2"`) and `fileKey`. Both come from the Figma URL the user opened, or from the `get_design_context` response (`fileKey` is in `meta`; node ids appear as `data-node-id` in the JSX).
+- Optional `codeConnectLabel` — pass when the project's stack matches a specific Code Connect language (e.g. `"vue"`, `"react"`). If you don't know, omit and the server returns the default.
+
+**Response shape:**
+
+```jsonc
+{
+  "<figma-node-id>": {
+    "codeConnectSrc": "https://github.com/foo/components/UiButton.vue",
+    "codeConnectName": "UiButton",
+  },
+}
+```
+
+`codeConnectSrc` is a source URL (typically GitHub) — translate it to a project-relative `importPath` using the project's import alias conventions (read `tsconfig.json` `paths` if needed). `codeConnectName` is the export/component name. Both go into the map.
+
+**How to use it:**
+
+- Call once per top-level `data-node-id` you intend to render as a component. Don't call for every node — many are pure layout `<div>`s.
+- If the call returns `{ error: "...Developer seat..." }` → user doesn't have the seat. Stop trying Tier 2, move on to Tier 3. Do not bother the user about it.
+- Only fill gaps left by Tier 1. If a node is already mapped via `figle.config.ts`, keep that mapping.
+
+#### Tier 3 — `.figle/components-index.json` (agent-maintained cache)
+
+If the cache file exists and was written less than 24 hours ago AND no `src/components/**/*.vue` (or whatever the project uses) file has an `mtime` newer than the cache, use it as-is. Otherwise re-scan: glob component files, read each, extract `name`, `path`, and `defineProps` signature. Write the index back. Format:
+
+```json
+{
+  "version": "0.1",
+  "scannedAt": "<ISO-8601>",
+  "components": [
+    {
+      "name": "UiButton",
+      "path": "@/components/UiButton.vue",
+      "props": ["variant: 'primary' | 'secondary'", "size: 'sm' | 'md' | 'lg'"]
+    }
+  ]
+}
+```
+
+Match by name heuristically — Figma component names usually map to project component names with predictable transforms (e.g. `Button` → `UiButton`, `IconButton` → `UiIconButton`). When in doubt, ask the user.
+
+#### Tier 4 — fall back to the raw Figma name
+
+For any Figma component still unmapped after all three tiers, emit a `<!-- TODO: figma component "X" has no project mapping -->` comment and use the Figma name as the local component identifier in the SFC. Don't invent imports.
 
 ### Step 3 — read minimal project context
 
@@ -72,6 +109,7 @@ Do not read the entire `src/components/` directory in this step — the index fr
 - For every Figma variable referenced in the design but absent from `tailwind.config.*` (project does not expose it), use the literal value and add a TODO comment.
 - For text content: take from the `<p>...</p>` bodies in `get_design_context`.
 - For layout: `flex-col` vs `flex-row` based on the JSX class structure (`flex flex-col gap-N p-N`).
+- **Component states**: if the component set in Figma has a `State` variant property (case-insensitive), look at the sibling variants in `get_metadata` — they describe `hover`, `focus`, `disabled`, etc. Each sibling's root-level visuals (background, border, opacity) become Tailwind state variants on the generated markup: `hover:bg-...`, `disabled:opacity-50`, `focus:ring-...`. The currently-selected state is the baseline.
 
 ### Step 5 — write the file
 
@@ -90,3 +128,6 @@ Do not read the entire `src/components/` directory in this step — the index fr
 - **No Figma selection**: ask the user to select a frame in Figma, then re-invoke.
 - **JSX in `get_design_context` is empty or contains only assets**: tell the user the selection is too large or too small to materialize as a single component; suggest selecting a smaller frame.
 - **Project not a Vue 3 + Tailwind app**: ask the user to confirm the target stack. The skill is tuned for `vue3-ts-tailwind` (per figle's V1 scope).
+- **Code Connect: developer seat required**: when `get_code_connect_map` returns an error containing "Developer seat" or similar, silently skip Tier 2 — don't surface this to the user. Continue with Tiers 3 and 4.
+- **Code Connect: missing entry for a node**: a node is not connected via Code Connect even though others are. Treat as "no Tier-2 mapping" — fall through to Tier 3/4 for that specific node.
+- **Code Connect: framework mismatch**: `get_code_connect_map` with a `codeConnectLabel` returns no entries but a call without the label returns some. Use the unlabelled response and trust the user that the mapping is right for the project.

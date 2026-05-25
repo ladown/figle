@@ -4,6 +4,7 @@ import type {
   RawNode,
   RawPaint,
   RawSize,
+  RawStateSnapshot,
   RawTypography,
   RawVariableAlias,
 } from "./types.js";
@@ -288,10 +289,11 @@ async function extractInstance(
 ): Promise<NonNullable<RawNode["instance"]>> {
   const mainComponent = await node.getMainComponentAsync();
   const mainComponentName = mainComponent?.name ?? "";
-  const componentSetName =
+  const parentSet =
     mainComponent?.parent?.type === "COMPONENT_SET"
-      ? mainComponent.parent.name
-      : undefined;
+      ? mainComponent.parent
+      : null;
+  const componentSetName = parentSet?.name;
 
   const out: NonNullable<RawNode["instance"]> = {
     mainComponentName,
@@ -304,7 +306,86 @@ async function extractInstance(
       { type: string; value: unknown }
     >;
   }
+
+  if (parentSet && node.variantProperties) {
+    const states = extractStates(parentSet, node.variantProperties);
+    if (states) out.states = states;
+  }
+
   return out;
+}
+
+function extractStates(
+  set: ComponentSetNode,
+  currentVariantProps: Record<string, string>,
+): Record<string, RawStateSnapshot> | undefined {
+  const definitions = set.componentPropertyDefinitions;
+  const stateKey = Object.keys(definitions).find((k) => /^state$/i.test(k));
+  if (!stateKey) return undefined;
+
+  const otherKeys = Object.keys(currentVariantProps).filter(
+    (k) => k !== stateKey,
+  );
+  const result: Record<string, RawStateSnapshot> = {};
+
+  for (const variant of set.children) {
+    if (variant.type !== "COMPONENT") continue;
+    const variantProps = parseVariantName(variant.name);
+    if (!variantProps[stateKey]) continue;
+    const matchesOthers = otherKeys.every(
+      (k) => variantProps[k] === currentVariantProps[k],
+    );
+    if (!matchesOthers) continue;
+
+    const stateName = variantProps[stateKey];
+    const snapshot = snapshotState(variant);
+    if (snapshot) result[stateName] = snapshot;
+  }
+
+  return Object.keys(result).length > 0 ? result : undefined;
+}
+
+function parseVariantName(name: string): Record<string, string> {
+  const out: Record<string, string> = {};
+  for (const part of name.split(",")) {
+    const [k, v] = part.split("=").map((s) => s.trim());
+    if (k && v) out[k] = v;
+  }
+  return out;
+}
+
+function snapshotState(node: ComponentNode): RawStateSnapshot | null {
+  const snapshot: RawStateSnapshot = {};
+  if (
+    "opacity" in node &&
+    typeof node.opacity === "number" &&
+    node.opacity < 1
+  ) {
+    snapshot.opacity = node.opacity;
+  }
+  if ("fills" in node && Array.isArray(node.fills)) {
+    const fills = extractPaints(node, node.fills as readonly Paint[], "fills");
+    if (fills.length > 0) snapshot.fills = fills;
+  }
+  if (
+    "strokes" in node &&
+    Array.isArray(node.strokes) &&
+    node.strokes.length > 0
+  ) {
+    snapshot.strokes = extractPaints(
+      node,
+      node.strokes as readonly Paint[],
+      "strokes",
+    );
+    if ("strokeWeight" in node && typeof node.strokeWeight === "number") {
+      snapshot.strokeWeight = node.strokeWeight;
+    }
+  }
+  if ("cornerRadius" in node) {
+    const corners = extractCornerRadius(node);
+    if (Object.keys(corners).length > 0) snapshot.corners = corners;
+  }
+  return Object.keys(snapshot).length > 0 ? snapshot : null;
 }
 
 function aliasFromBound(

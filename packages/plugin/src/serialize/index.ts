@@ -90,6 +90,7 @@ async function stripMeta(
       props: node.props,
     };
     if (node.importPath !== undefined) out.importPath = node.importPath;
+    if (node.states !== undefined) out.states = node.states;
     if (node.children) {
       out.children = await Promise.all(
         node.children.map((c) => stripMeta(c, assets)),

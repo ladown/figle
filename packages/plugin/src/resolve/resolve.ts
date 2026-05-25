@@ -48,6 +48,7 @@ function resolveNode(ctx: ResolveContext, node: RawNode): ResolvedNode {
     }
     if (!ctx.config) {
       return resolvePassthroughInstance(
+        ctx,
         node,
         (child) => resolveNode(ctx, child),
         (name) => ctx.enter(name),

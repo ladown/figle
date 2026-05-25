@@ -34,6 +34,13 @@ it into one Vue Single-File Component.
   conventions.
 - Pass a \`ComponentRef\`'s \`props\` through directly to the project component.
   Pass \`children\` and \`slots\` to their respective Vue slots.
+- If a \`ComponentRef\` has a \`states\` block (\`{ hover: {...}, disabled: {...} }\`),
+  use it to emit Tailwind variant classes. Each state's snapshot lists the root-
+  level visual properties that change in that state (background, border,
+  opacity). Translate to Tailwind state variants — \`hover:bg-...\`,
+  \`disabled:opacity-50\`, \`focus:ring-...\` etc. — and merge with the default
+  styling. The current state (matching \`props.state\`) is the baseline; other
+  states extend it.
 - \`IconNode\` (\`{ "$type": "icon" }\`): the SVG file lives at
   \`.figle/assets/<src>\`. Inline it into the SFC, or import it as an asset —
   whichever the project conventions prefer. The \`name\` field hints at the

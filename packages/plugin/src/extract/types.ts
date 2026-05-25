@@ -68,6 +68,16 @@ export type RawAsset = {
   bytes: Uint8Array;
 };
 
+export type RawStateSnapshot = {
+  opacity?: number;
+  fills?: RawPaint[];
+  fillStyleName?: string;
+  strokes?: RawPaint[];
+  strokeStyleName?: string;
+  strokeWeight?: number;
+  corners?: RawCornerRadius;
+};
+
 export type RawNode = {
   id: string;
   name: string;
@@ -90,6 +100,7 @@ export type RawNode = {
     componentSetName?: string;
     variantProperties?: Record<string, string>;
     componentProperties?: Record<string, { type: string; value: unknown }>;
+    states?: Record<string, RawStateSnapshot>;
   };
   asset?: RawAsset;
   imageOversize?: { width: number; height: number };
