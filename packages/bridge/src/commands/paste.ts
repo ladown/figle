@@ -9,8 +9,17 @@ import {
   type Spec,
   type SpecCopyPayload,
 } from "@figle/spec-schema";
+import { ConfigLoadError, findConfigPath, loadConfig } from "../load-config.js";
+import { InvalidOutputDirError, resolveOutputDir } from "../output-dir.js";
 
-export async function runPaste(cwd: string): Promise<void> {
+export type PasteOptions = {
+  out?: string;
+};
+
+export async function runPaste(
+  cwd: string,
+  options: PasteOptions = {},
+): Promise<void> {
   const raw = clipboard.readSync();
   if (!raw.trim()) {
     console.error("figle: clipboard is empty.");
@@ -27,13 +36,25 @@ export async function runPaste(cwd: string): Promise<void> {
   }
 
   const payload = parsePayload(parsed);
-  const outDir = resolve(cwd, ".figle");
-  await mkdir(outDir, { recursive: true });
+  const configOutputDir = await readConfigOutputDir(cwd);
+
+  let outDir;
+  try {
+    outDir = resolveOutputDir(cwd, configOutputDir, options.out);
+  } catch (err) {
+    if (err instanceof InvalidOutputDirError) {
+      console.error(`figle: ${err.message}`);
+      process.exit(1);
+    }
+    throw err;
+  }
+
+  await mkdir(outDir.absolute, { recursive: true });
 
   const specFiles = assignSpecFilenames(payload.specs);
   await Promise.all(
     specFiles.map(async ({ filename, spec }) => {
-      const dest = resolve(outDir, "specs", filename);
+      const dest = resolve(outDir.absolute, "specs", filename);
       await mkdir(dirname(dest), { recursive: true });
       await writeFile(
         dest,
@@ -46,29 +67,29 @@ export async function runPaste(cwd: string): Promise<void> {
 
   await Promise.all(
     payload.assets.map(async (asset) => {
-      const dest = resolve(outDir, "assets", asset.path);
+      const dest = resolve(outDir.absolute, "assets", asset.path);
       await mkdir(dirname(dest), { recursive: true });
       await writeFile(dest, Buffer.from(asset.base64, "base64"));
     }),
   );
   if (payload.assets.length > 0) {
     console.log(
-      `figle: wrote ${payload.assets.length} asset(s) to ${resolve(outDir, "assets")}`,
+      `figle: wrote ${payload.assets.length} asset(s) to ${resolve(outDir.absolute, "assets")}`,
     );
   }
 
-  const promptPath = resolve(outDir, "PROMPT.md");
+  const promptPath = resolve(outDir.absolute, "PROMPT.md");
   const promptBody = renderPrompt({
     stack: "vue3-ts-tailwind",
     specPath:
       specFiles.length === 1
-        ? `.figle/specs/${specFiles[0]!.filename}`
-        : ".figle/specs/",
+        ? `${outDir.relative}/specs/${specFiles[0]!.filename}`
+        : `${outDir.relative}/specs/`,
     warningsCount: payload.specs.reduce((sum, s) => sum + s.warnings.length, 0),
   });
   await writeFile(
     promptPath,
-    buildPromptHeader(specFiles) + promptBody,
+    buildPromptHeader(specFiles, outDir.relative) + promptBody,
     "utf8",
   );
   console.log(`figle: wrote ${promptPath}`);
@@ -107,6 +128,21 @@ function assignSpecFilenames(specs: Spec[]): SpecFile[] {
   return result;
 }
 
+async function readConfigOutputDir(cwd: string): Promise<string | undefined> {
+  const configPath = findConfigPath(cwd);
+  if (!configPath) return undefined;
+  try {
+    const config = await loadConfig(configPath, cwd);
+    return config.output?.dir;
+  } catch (err) {
+    if (err instanceof ConfigLoadError) {
+      // Config is broken but paste should still work — silently fall back to defaults.
+      return undefined;
+    }
+    throw err;
+  }
+}
+
 function parsePayload(input: unknown): SpecCopyPayload {
   const newFmt = SpecCopyPayloadSchema.safeParse(input);
   if (newFmt.success) return newFmt.data;
@@ -127,7 +163,7 @@ function parsePayload(input: unknown): SpecCopyPayload {
   process.exit(1);
 }
 
-function buildPromptHeader(specFiles: SpecFile[]): string {
+function buildPromptHeader(specFiles: SpecFile[], outDirRel: string): string {
   if (specFiles.length === 1) {
     const { spec, filename } = specFiles[0]!;
     const { meta } = spec;
@@ -139,7 +175,7 @@ function buildPromptHeader(specFiles: SpecFile[]): string {
     const lines = [
       `# ${name}${sizeSuffix}`,
       "",
-      `Spec: .figle/specs/${filename}`,
+      `Spec: ${outDirRel}/specs/${filename}`,
     ];
     const url = sourceUrl(meta.figmaFileKey, meta.nodeId);
     if (url) lines.push(`Figma source: ${url}`);
@@ -156,7 +192,7 @@ function buildPromptHeader(specFiles: SpecFile[]): string {
         ? ` (${Math.round(meta.width)}×${Math.round(meta.height)})`
         : "";
     lines.push(`## ${name}${sizeSuffix}`);
-    lines.push(`Spec: .figle/specs/${filename}`);
+    lines.push(`Spec: ${outDirRel}/specs/${filename}`);
     const url = sourceUrl(meta.figmaFileKey, meta.nodeId);
     if (url) lines.push(`Figma source: ${url}`);
     lines.push("");

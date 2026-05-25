@@ -29,8 +29,15 @@ export const ComponentDescriptorSchema = z.object({
 
 export type ComponentDescriptor = z.infer<typeof ComponentDescriptorSchema>;
 
+export const OutputConfigSchema = z.object({
+  dir: z.string().min(1),
+});
+
+export type OutputConfig = z.infer<typeof OutputConfigSchema>;
+
 export const BridgeConfigSchema = z.object({
   stack: StackSchema,
+  output: OutputConfigSchema.optional(),
   tokens: z.record(z.string(), z.string()),
   components: z.record(z.string(), ComponentDescriptorSchema),
 });

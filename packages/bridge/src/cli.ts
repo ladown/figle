@@ -6,9 +6,10 @@ import { runSync } from "./commands/sync.js";
 const USAGE = `figle — bridge between the Figma plugin and your project.
 
 Usage:
-  figle init [--force]   Create figle.config.ts in the current directory.
-  figle sync             Read figle.config.{ts,mts,js,mjs}, copy a hashed blob to clipboard.
-  figle paste            Read clipboard, validate as Spec, write .figle/last-spec.json + PROMPT.md.
+  figle init [--force]              Create figle.config.ts in the current directory.
+  figle sync                        Read figle.config.{ts,mts,js,mjs}, copy a hashed blob to clipboard.
+  figle paste [--out <dir>]         Read clipboard, validate as Spec, write specs/assets/PROMPT.md.
+                                    Default output dir: .figle/ (override via --out or config.output.dir).
 `;
 
 async function main(): Promise<void> {
@@ -30,10 +31,27 @@ async function main(): Promise<void> {
       assertNoArgs(rest);
       await runSync(process.cwd());
       return;
-    case "paste":
-      assertNoArgs(rest);
-      await runPaste(process.cwd());
+    case "paste": {
+      const outFlagIndex = rest.indexOf("--out");
+      let out: string | undefined;
+      const remaining: string[] = [];
+      for (let i = 0; i < rest.length; i++) {
+        if (i === outFlagIndex) {
+          out = rest[i + 1];
+          i += 1;
+          continue;
+        }
+        remaining.push(rest[i]!);
+      }
+      if (outFlagIndex >= 0 && (out === undefined || out.startsWith("-"))) {
+        console.error("figle: --out requires a directory argument.");
+        console.error(USAGE);
+        process.exit(1);
+      }
+      assertNoArgs(remaining);
+      await runPaste(process.cwd(), out !== undefined ? { out } : {});
       return;
+    }
     case undefined:
     case "-h":
     case "--help":
