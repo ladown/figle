@@ -1,0 +1,14 @@
+blank_issues_enabled: false
+contact_links:
+  - name: 🧪 Pilot guide (RU)
+    url: https://github.com/ladown/figle/blob/beta/docs/PILOT.ru.md
+    about: Полное руководство для пилотного тестирования — начни отсюда если ты тестер.
+  - name: 📋 Roadmap
+    url: https://github.com/ladown/figle/blob/beta/docs/ROADMAP.md
+    about: Current scope, explicit non-goals, and planned phases.
+  - name: 🏗️ Architecture
+    url: https://github.com/ladown/figle/blob/beta/docs/ARCHITECTURE.md
+    about: Two-branch design, shared contract, what is intentionally not in scope.
+  - name: 💬 Discussions
+    url: https://github.com/ladown/figle/discussions
+    about: Open-ended questions, ideas, or anything that doesn't fit a bug or feature request.
