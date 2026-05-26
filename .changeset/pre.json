@@ -1,0 +1,10 @@
+{
+  "mode": "pre",
+  "tag": "beta",
+  "initialVersions": {
+    "@figle/spec-schema": "0.0.0",
+    "@figle/cli": "0.0.0",
+    "@figle/mcp-preset": "0.0.0"
+  },
+  "changesets": []
+}

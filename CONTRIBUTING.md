@@ -39,16 +39,28 @@ CI runs the same five checks on every push and pull request — make sure they p
 - **`master`** — stable. Publishes to `npm` with the `latest` dist-tag.
 - **`beta`** — pre-release. Publishes with the `beta` dist-tag.
 
-Day-to-day work goes through PRs into `beta`. When a batch of changes is stable, `beta` is merged into `master` for the next stable release. Releases are driven by [semantic-release](https://semantic-release.gitbook.io/) — versions are inferred from your commit messages, so format matters.
+Day-to-day work goes through PRs into `beta`. When a batch of changes is stable, `beta` is merged into `master` for the next stable release.
+
+Releases are driven by [Changesets](https://github.com/changesets/changesets). The flow:
+
+1. Make your changes on a feature branch, open a PR into `beta`.
+2. Run `pnpm changeset` — pick the affected packages and the bump kind (patch / minor / major). It writes a markdown file under `.changeset/`.
+3. Commit that file alongside your code change. CI ensures every non-chore PR carries at least one changeset.
+4. On merge into `master` or `beta`, the `changesets/action` workflow opens (or updates) a **Release PR**. Merging that PR publishes the affected packages to npm with the right dist-tag (`latest` from `master`, `beta` from `beta`).
+
+You usually do not write versions by hand — `pnpm version-packages` (run by the bot) applies the bumps from the queued changesets.
+
+### Pre-release period
+
+The repo is currently in changesets' `pre` mode (see `.changeset/pre.json`). Every release out of `master` or `beta` is a `1.0.0-beta.N` until we explicitly exit pre mode. To leave it before the first stable release: `pnpm changeset pre exit`, then merge the resulting Release PR — that ships `1.0.0` to the `latest` dist-tag.
 
 ## Commit style
 
-Use [Conventional Commits](https://www.conventionalcommits.org/):
+Conventional commit prefixes are not required by the release tool, but we use them for readability:
 
-- `feat: …` — new feature (minor bump).
-- `fix: …` — bug fix (patch bump).
-- `feat!: …` or `fix!: …` with `BREAKING CHANGE:` in the body — major bump.
-- `chore: …`, `docs: …`, `test: …`, `refactor: …`, `style: …` — no version bump.
+- `feat: …` — new feature.
+- `fix: …` — bug fix.
+- `chore: …`, `docs: …`, `test: …`, `refactor: …`, `style: …` — non-feature work.
 
 Other rules (from [`docs/CONVENTIONS.md`](./docs/CONVENTIONS.md)):
 
@@ -56,6 +68,8 @@ Other rules (from [`docs/CONVENTIONS.md`](./docs/CONVENTIONS.md)):
 - Imperative mood (`add`, not `added`).
 - Subject ≤ 72 characters total, lowercase after the colon, no trailing period.
 - No `Co-authored-by` or AI-attribution lines.
+
+The bump kind (patch / minor / major) is decided in the changeset file, not from the commit message.
 
 ## What's in scope
 

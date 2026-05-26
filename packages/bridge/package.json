@@ -4,6 +4,26 @@
   "description": "CLI for figle: sync the bridge config to the plugin, paste extracted Specs into the project.",
   "license": "MIT",
   "type": "module",
+  "homepage": "https://github.com/ladown/figle#readme",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/ladown/figle.git",
+    "directory": "packages/bridge"
+  },
+  "bugs": {
+    "url": "https://github.com/ladown/figle/issues"
+  },
+  "publishConfig": {
+    "access": "public",
+    "provenance": true
+  },
+  "keywords": [
+    "figma",
+    "figle",
+    "cli",
+    "design-to-code",
+    "design-tokens"
+  ],
   "main": "./dist/index.js",
   "module": "./dist/index.js",
   "types": "./dist/index.d.ts",

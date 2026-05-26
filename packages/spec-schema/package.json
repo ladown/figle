@@ -4,6 +4,27 @@
   "description": "Canonical Spec and BridgeConfig schemas, plus the agent prompt template.",
   "license": "MIT",
   "type": "module",
+  "homepage": "https://github.com/ladown/figle#readme",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/ladown/figle.git",
+    "directory": "packages/spec-schema"
+  },
+  "bugs": {
+    "url": "https://github.com/ladown/figle/issues"
+  },
+  "publishConfig": {
+    "access": "public",
+    "provenance": true
+  },
+  "keywords": [
+    "figma",
+    "figle",
+    "design-to-code",
+    "spec",
+    "schema",
+    "zod"
+  ],
   "main": "./dist/index.js",
   "module": "./dist/index.js",
   "types": "./dist/index.d.ts",

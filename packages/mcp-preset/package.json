@@ -4,6 +4,28 @@
   "description": "Skill for Claude Code / Cursor that orchestrates Figma Dev Mode MCP and Filesystem MCP to generate Vue SFCs.",
   "license": "MIT",
   "type": "module",
+  "homepage": "https://github.com/ladown/figle#readme",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/ladown/figle.git",
+    "directory": "packages/mcp-preset"
+  },
+  "bugs": {
+    "url": "https://github.com/ladown/figle/issues"
+  },
+  "publishConfig": {
+    "access": "public",
+    "provenance": true
+  },
+  "keywords": [
+    "figma",
+    "figle",
+    "mcp",
+    "claude-code",
+    "cursor",
+    "skill",
+    "design-to-code"
+  ],
   "main": "./dist/index.js",
   "module": "./dist/index.js",
   "types": "./dist/index.d.ts",
