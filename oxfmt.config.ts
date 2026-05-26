@@ -10,5 +10,11 @@ export default defineConfig({
   endOfLine: "lf",
   bracketSpacing: true,
   sortPackageJson: false,
-  ignorePatterns: ["**/dist/**", "**/node_modules/**", "**/.figle/**"],
+  ignorePatterns: [
+    "**/dist/**",
+    "**/node_modules/**",
+    "**/.figle/**",
+    "**/CHANGELOG.md",
+    ".changeset/pre.json",
+  ],
 });
