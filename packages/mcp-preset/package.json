@@ -1,6 +1,6 @@
 {
   "name": "@figle/mcp-preset",
-  "version": "0.0.0",
+  "version": "0.1.0-beta.0",
   "description": "Skill for Claude Code / Cursor that orchestrates Figma Dev Mode MCP and Filesystem MCP to generate Vue SFCs.",
   "license": "MIT",
   "type": "module",
