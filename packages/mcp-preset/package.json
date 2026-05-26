@@ -14,8 +14,7 @@
     "url": "https://github.com/ladown/figle/issues"
   },
   "publishConfig": {
-    "access": "public",
-    "provenance": true
+    "access": "public"
   },
   "keywords": [
     "figma",
