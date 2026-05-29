@@ -9,6 +9,7 @@
     "@figle/plugin": "0.0.0"
   },
   "changesets": [
-    "initial-1-0-0"
+    "initial-1-0-0",
+    "republish-with-pnpm"
   ]
 }
