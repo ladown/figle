@@ -10,6 +10,7 @@
   },
   "changesets": [
     "initial-1-0-0",
-    "republish-with-pnpm"
+    "republish-with-pnpm",
+    "skill-mcp-variants"
   ]
 }
