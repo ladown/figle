@@ -40,8 +40,29 @@ async function main(): Promise<void> {
   await copyFile(SKILL_SOURCE, dest);
 
   console.log(`figle-mcp: installed skill to ${dest}`);
+  console.log("");
+  console.log("Next steps:");
   console.log(
-    `figle-mcp: restart Claude Code, then invoke the skill by name "figle".`,
+    "  1. Enable Figma's local MCP server: Figma desktop → Preferences →",
+  );
+  console.log("     ✅ Enable Dev Mode MCP Server (then restart Figma).");
+  console.log("  2. Register it with Claude Code:");
+  console.log(
+    "       claude mcp add --transport http figma-dev-mode http://127.0.0.1:3845/mcp",
+  );
+  console.log(
+    '  3. Restart Claude Code, then invoke the skill by name "figle"',
+  );
+  console.log('     or as "/figle ...".');
+  console.log("");
+  console.log(
+    "If only the remote/plugin Figma MCP (mcp__plugin_figma_figma__*) is",
+  );
+  console.log(
+    "connected, the skill still works but will ask you to paste a Figma",
+  );
+  console.log(
+    'link for each selection (right-click the frame → "Copy link to selection").',
   );
 }
 

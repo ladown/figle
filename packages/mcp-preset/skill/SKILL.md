@@ -9,7 +9,20 @@ You are turning a Figma selection into a Vue 3 SFC. The Figma side is read via t
 
 ## Required MCP servers
 
-- **Figma Dev Mode MCP** (`mcp__Figma__*`) — the user has the Figma desktop app open with Dev Mode MCP enabled. If `get_design_context` returns an instructional message instead of real data, tell the user to enable the toggle and restart you. Do not try to recover further.
+You need exactly one Figma MCP connected. Two flavours exist; **detect which one is registered in the current session by scanning the available tool names**, then follow that flavour's call shape.
+
+| Flavour                            | Tool prefix you'll see                                          | Selection-aware (no args needed)                                     | Where it runs                                     |
+| ---------------------------------- | --------------------------------------------------------------- | -------------------------------------------------------------------- | ------------------------------------------------- |
+| **Local Dev Mode MCP** (preferred) | `mcp__Figma__*` (e.g. `mcp__Figma__get_design_context`)         | ✅ yes — reads the user's current selection in the Figma desktop app | `http://127.0.0.1:3845/mcp`, inside Figma desktop |
+| **Remote / plugin Figma MCP**      | `mcp__plugin_figma_figma__*` (or any other `*_figma_*` variant) | ❌ no — requires explicit `fileKey` + `nodeId` on every call         | Figma cloud / OAuth                               |
+
+Detection rule: if any tool named `mcp__Figma__get_design_context` is available → **local** mode. Else if any `*figma*get_design_context` tool is available → **remote** mode. Else → no Figma MCP, stop and instruct the user (see Failure modes).
+
+- **Local mode**: call the tools with no `nodeId`/`fileKey` — they implicitly target the current Figma selection. This is the smooth path; recommend it to the user.
+- **Remote mode**: every call needs `fileKey` and `nodeId`. **Ask the user for a Figma link to the selection** before doing anything else (Figma desktop → right-click the frame → "Copy link to selection"). Parse `fileKey` from `/design/<fileKey>/...` and `nodeId` from the `node-id` query param, converting `-` back to `:` (e.g. `1-23` → `1:23`).
+
+If both flavours are connected simultaneously, prefer the local one — it gives selection-aware UX and is what figle's docs target.
+
 - **Filesystem MCP** (or your built-in Read/Glob tools) — to read project files.
 
 ## Output rules
@@ -24,12 +37,16 @@ You are turning a Figma selection into a Vue 3 SFC. The Figma side is read via t
 
 ### Step 1 — read the Figma selection
 
-Call these tools on the user's current Figma selection. If they paste a Figma URL, extract both the `fileKey` (the path segment after `/design/`) and the `node-id` (the query param, converting `-` to `:`) — you'll need both for Tier 2 of component mapping below.
+First, follow the detection rule in "Required MCP servers" to decide whether you're in **local** or **remote** mode. In remote mode, ask for the link before calling any tool; in local mode, just call.
 
-- `mcp__Figma__get_design_context` — main signal: generated JSX + Tailwind for the selection.
-- `mcp__Figma__get_variable_defs` — flat map of Figma variable paths to their resolved values.
-- `mcp__Figma__get_metadata` — XML overview of the node tree (use to distinguish instances from frames).
-- `mcp__Figma__get_screenshot` — only fetch if you need to disambiguate something visually. Otherwise skip — it costs tokens.
+Use the tools below — the names shown use the local prefix; substitute `mcp__plugin_figma_figma__*` (or your detected variant) if you're in remote mode, and pass `fileKey` + `nodeId` parsed from the link.
+
+- `…get_design_context` — main signal: generated JSX + Tailwind for the selection.
+- `…get_variable_defs` — flat map of Figma variable paths to their resolved values.
+- `…get_metadata` — XML overview of the node tree (use to distinguish instances from frames).
+- `…get_screenshot` — only fetch if you need to disambiguate something visually. Otherwise skip — it costs tokens.
+
+You'll need `fileKey` + a top-level `nodeId` regardless of mode for Tier 2 of component mapping. In local mode, `fileKey` is in the `meta` block of `get_design_context`'s response and node ids appear as `data-node-id` in the returned JSX.
 
 ### Step 2 — resolve the component map (tiered)
 
@@ -41,7 +58,7 @@ If it exists, read it as plain text (do not execute). Its `components: { ... }` 
 
 The `figle.config.ts` represents the user's **explicit decision** about how a Figma component maps to a project component. Treat it as authoritative — never override it with a different source.
 
-#### Tier 2 — `mcp__Figma__get_code_connect_map`
+#### Tier 2 — `…get_code_connect_map` (Figma Code Connect)
 
 If the user has a paid Figma Developer seat with Code Connect set up, this tool returns a map of Figma node ids to their connected codebase components.
 
@@ -124,8 +141,10 @@ Do not read the entire `src/components/` directory in this step — the index fr
 
 ## Failure modes
 
-- **Figma MCP not enabled**: detect the instructional message in the tool response → tell the user to enable Dev Mode MCP Server in Figma preferences and restart this session.
-- **No Figma selection**: ask the user to select a frame in Figma, then re-invoke.
+- **No Figma MCP connected at all**: neither `mcp__Figma__*` nor `mcp__plugin_figma_figma__*` (or any `*figma*get_design_context`) tools are available. Tell the user to either (a) enable **Dev Mode MCP Server** in Figma desktop (Figma menu → Preferences → ✅ "Enable Dev Mode MCP Server"), then add it to Claude Code with `claude mcp add --transport http figma-dev-mode http://127.0.0.1:3845/mcp` and restart — recommended; or (b) connect Figma's remote/plugin MCP via OAuth. Then re-invoke the skill.
+- **Local Figma MCP returns an instructional message instead of data**: the toggle is off or the file isn't a Design file in Dev Mode. Tell the user to enable the toggle, open a Design file, and restart this session.
+- **Remote Figma MCP but no link provided**: ask the user once for the Figma link to the selection (right-click → "Copy link to selection"). Do not guess `fileKey` or `nodeId`.
+- **No Figma selection** (local mode): ask the user to select a frame in Figma, then re-invoke.
 - **JSX in `get_design_context` is empty or contains only assets**: tell the user the selection is too large or too small to materialize as a single component; suggest selecting a smaller frame.
 - **Project not a Vue 3 + Tailwind app**: ask the user to confirm the target stack. The skill is tuned for `vue3-ts-tailwind` (per figle's V1 scope).
 - **Code Connect: developer seat required**: when `get_code_connect_map` returns an error containing "Developer seat" or similar, silently skip Tier 2 — don't surface this to the user. Continue with Tiers 3 and 4.
