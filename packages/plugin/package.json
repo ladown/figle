@@ -28,6 +28,6 @@
   },
   "devDependencies": {
     "@create-figma-plugin/build": "4.0.3",
-    "@figma/plugin-typings": "1.126.0"
+    "@figma/plugin-typings": "1.127.0"
   }
 }
