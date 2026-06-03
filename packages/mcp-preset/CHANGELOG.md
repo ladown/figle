@@ -1,3 +1,19 @@
+## @figle/mcp-preset-v1.0.0-beta.1 (2026-06-03)
+
+### Features
+
+* add @figle/mcp-preset (Phase 10) as skill, not adapter ([5cef0c6](https://github.com/ladown/figle/commit/5cef0c67b94536db36b8db0c04a386926033ef4e))
+* extract component state snapshots from Figma variant sets ([737b005](https://github.com/ladown/figle/commit/737b0058397163c169c0fdd0ade025c8fd0cad3b))
+* **mcp-preset:** detect figma mcp variant in skill ([17a3dd6](https://github.com/ladown/figle/commit/17a3dd63fce54647bacdee6ea718aed012a0013e))
+
+### Bug Fixes
+
+* **mcp-preset:** document local vs remote figma mcp variants ([754bebb](https://github.com/ladown/figle/commit/754bebb941715820cefa7ac4895952bec978c5eb))
+
+### Documentation
+
+* add CODE_OF_CONDUCT, CONTRIBUTING, and per-package LICENSE ([16d8dd6](https://github.com/ladown/figle/commit/16d8dd64836d3b1c592322e8900a34d8e20cc47b))
+
 # @figle/mcp-preset
 
 ## 0.1.0-beta.2
