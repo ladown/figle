@@ -17,15 +17,20 @@
     "lint": "oxlint",
     "fmt": "oxfmt .",
     "fmt:check": "oxfmt --check .",
-    "changeset": "changeset",
-    "version-packages": "changeset version",
-    "release": "pnpm build && changeset publish"
+    "release": "pnpm -r --workspace-concurrency=1 run release"
   },
   "devDependencies": {
-    "@changesets/changelog-github": "0.7.0",
-    "@changesets/cli": "2.31.0",
+    "@semantic-release/changelog": "6.0.3",
+    "@semantic-release/commit-analyzer": "13.0.1",
+    "@semantic-release/git": "10.0.1",
+    "@semantic-release/github": "11.0.6",
+    "@semantic-release/npm": "12.0.2",
+    "@semantic-release/release-notes-generator": "14.1.0",
+    "conventional-changelog-conventionalcommits": "9.1.0",
     "oxfmt": "0.51.0",
     "oxlint": "1.66.0",
+    "semantic-release": "24.2.9",
+    "semantic-release-monorepo": "8.0.2",
     "tsdown": "0.22.0",
     "typescript": "6.0.3",
     "vitest": "4.1.7"

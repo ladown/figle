@@ -43,7 +43,8 @@
   ],
   "scripts": {
     "build": "tsdown",
-    "typecheck": "tsc --noEmit"
+    "typecheck": "tsc --noEmit",
+    "release": "semantic-release"
   },
   "dependencies": {
     "@figle/spec-schema": "workspace:*"

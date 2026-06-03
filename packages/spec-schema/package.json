@@ -38,7 +38,8 @@
   ],
   "scripts": {
     "build": "tsdown",
-    "typecheck": "tsc --noEmit"
+    "typecheck": "tsc --noEmit",
+    "release": "semantic-release"
   },
   "dependencies": {
     "zod": "^4.4.3"
