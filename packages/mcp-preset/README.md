@@ -20,9 +20,10 @@ Both produce a Vue SFC. Both respect `figle.config.ts` when present. Pick by wha
 - **Figma desktop app** with **Dev Mode MCP Server** enabled:
   - Figma menu (top-left burger) → Preferences → check "Enable Dev Mode MCP Server".
   - You need a paid **Developer seat** in an Organization or Enterprise plan.
-- **Claude Code** (or any MCP-compatible agent) configured with:
-  - The Figma MCP server (auto-discovered from the running Figma desktop).
-  - A Filesystem MCP server, or the built-in Read/Glob tools, for the agent to read your project files.
+- **Claude Code** (or any MCP-compatible agent) configured with one of the two Figma MCP flavours:
+  - **Local Dev Mode MCP** (recommended) — `http://127.0.0.1:3845/mcp`, runs inside Figma desktop, reads the current selection without arguments. Register it with `claude mcp add --transport http figma-dev-mode http://127.0.0.1:3845/mcp`.
+  - **Remote / plugin Figma MCP** — Figma's cloud OAuth MCP. Works too, but every call needs an explicit `fileKey` + `nodeId`, so the skill will ask for a Figma link to the selection each time.
+- A Filesystem MCP server, or the built-in Read/Glob tools, for the agent to read your project files.
 
 ## Install
 
