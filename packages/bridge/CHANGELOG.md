@@ -1,3 +1,19 @@
+## @figle/cli-v1.0.0-beta.1 (2026-06-03)
+
+### Features
+
+* add @figle/cli with sync and paste commands ([e278740](https://github.com/ladown/figle/commit/e2787402673975799b073838b3d8b58a4a8de0b0))
+* add serialize, orchestrator, and DemoCard e2e fixture ([b87d4bf](https://github.com/ladown/figle/commit/b87d4bf58dea6c178b8ecc68148cebf88a713a82))
+* **bridge:** add `figle init` to bootstrap figle.config.ts ([99c0426](https://github.com/ladown/figle/commit/99c042626caf0ff67d7d100a0a98379db4c14caa))
+* **bridge:** humane error messages on invalid figle.config.ts ([fcece3a](https://github.com/ladown/figle/commit/fcece3a330a1c1f57bc361625344ae43127bc6c9))
+* customizable output dir for figle paste ([da685db](https://github.com/ladown/figle/commit/da685db7a232b6136e749b6c0a54fd4671fe7f26))
+* export icons and images as bundled assets, with downscale fallback ([3d9aa6b](https://github.com/ladown/figle/commit/3d9aa6b778fe53649965b93b116acd36cd21d8d9))
+* multi-frame extract — one payload with multiple specs ([e716d46](https://github.com/ladown/figle/commit/e716d46b363ce8fa2cb8d999f90d035e51e927a3))
+
+### Documentation
+
+* add CODE_OF_CONDUCT, CONTRIBUTING, and per-package LICENSE ([16d8dd6](https://github.com/ladown/figle/commit/16d8dd64836d3b1c592322e8900a34d8e20cc47b))
+
 # @figle/cli
 
 ## 0.1.0-beta.1

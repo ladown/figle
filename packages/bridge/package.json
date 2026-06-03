@@ -1,6 +1,6 @@
 {
   "name": "@figle/cli",
-  "version": "0.1.0-beta.1",
+  "version": "1.0.0-beta.1",
   "description": "CLI for figle: sync the bridge config to the plugin, paste extracted Specs into the project.",
   "license": "MIT",
   "type": "module",
