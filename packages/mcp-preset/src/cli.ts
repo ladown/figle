@@ -43,9 +43,11 @@ async function main(): Promise<void> {
   console.log("");
   console.log("Next steps:");
   console.log(
-    "  1. Enable Figma's local MCP server: Figma desktop → Preferences →",
+    "  1. Enable Figma's local MCP server: switch the file to Dev Mode,",
   );
-  console.log("     ✅ Enable Dev Mode MCP Server (then restart Figma).");
+  console.log(
+    '     then in the right-hand panel click "Enable desktop MCP server".',
+  );
   console.log("  2. Register it with Claude Code:");
   console.log(
     "       claude mcp add --transport http figma-dev-mode http://127.0.0.1:3845/mcp",

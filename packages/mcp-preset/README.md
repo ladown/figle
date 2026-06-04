@@ -17,8 +17,8 @@ Both produce a Vue SFC. Both respect `figle.config.ts` when present. Pick by wha
 
 ## Prerequisites
 
-- **Figma desktop app** with **Dev Mode MCP Server** enabled:
-  - Figma menu (top-left burger) → Preferences → check "Enable Dev Mode MCP Server".
+- **Figma desktop app** with the local MCP server enabled:
+  - Switch the file to **Dev Mode**, then in the right-hand panel click **"Enable desktop MCP server"**.
   - You need a paid **Developer seat** in an Organization or Enterprise plan.
 - **Claude Code** (or any MCP-compatible agent) configured with one of the two Figma MCP flavours:
   - **Local Dev Mode MCP** (recommended) — `http://127.0.0.1:3845/mcp`, runs inside Figma desktop, reads the current selection without arguments. Register it with `claude mcp add --transport http figma-dev-mode http://127.0.0.1:3845/mcp`.

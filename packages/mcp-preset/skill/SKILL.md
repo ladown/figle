@@ -141,7 +141,7 @@ Do not read the entire `src/components/` directory in this step — the index fr
 
 ## Failure modes
 
-- **No Figma MCP connected at all**: neither `mcp__Figma__*` nor `mcp__plugin_figma_figma__*` (or any `*figma*get_design_context`) tools are available. Tell the user to either (a) enable **Dev Mode MCP Server** in Figma desktop (Figma menu → Preferences → ✅ "Enable Dev Mode MCP Server"), then add it to Claude Code with `claude mcp add --transport http figma-dev-mode http://127.0.0.1:3845/mcp` and restart — recommended; or (b) connect Figma's remote/plugin MCP via OAuth. Then re-invoke the skill.
+- **No Figma MCP connected at all**: neither `mcp__Figma__*` nor `mcp__plugin_figma_figma__*` (or any `*figma*get_design_context`) tools are available. Tell the user to either (a) enable the local MCP server in Figma desktop (switch the file to **Dev Mode**, then in the right-hand panel click **"Enable desktop MCP server"**), then add it to Claude Code with `claude mcp add --transport http figma-dev-mode http://127.0.0.1:3845/mcp` and restart — recommended; or (b) connect Figma's remote/plugin MCP via OAuth. Then re-invoke the skill.
 - **Local Figma MCP returns an instructional message instead of data**: the toggle is off or the file isn't a Design file in Dev Mode. Tell the user to enable the toggle, open a Design file, and restart this session.
 - **Remote Figma MCP but no link provided**: ask the user once for the Figma link to the selection (right-click → "Copy link to selection"). Do not guess `fileKey` or `nodeId`.
 - **No Figma selection** (local mode): ask the user to select a frame in Figma, then re-invoke.
