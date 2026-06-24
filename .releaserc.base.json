@@ -1,9 +1,6 @@
 {
   "$schema": "https://json.schemastore.org/semantic-release.json",
-  "branches": [
-    "master",
-    { "name": "beta", "prerelease": true }
-  ],
+  "branches": ["master", { "name": "beta", "prerelease": true }],
   "plugins": [
     [
       "@semantic-release/commit-analyzer",
