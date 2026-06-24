@@ -1,3 +1,9 @@
+## [@figle/spec-schema-v1.0.0-beta.3](https://github.com/ladown/figle/compare/@figle/spec-schema@1.0.0-beta.2...@figle/spec-schema@1.0.0-beta.3) (2026-06-24)
+
+### Features
+
+* **spec:** export component sets as ComponentSetNode with camelCase axes ([1e6cb65](https://github.com/ladown/figle/commit/1e6cb653d696a9a5f8d3783a1acffe835c511214))
+
 ## [@figle/spec-schema-v1.0.0-beta.2](https://github.com/ladown/figle/compare/@figle/spec-schema@1.0.0-beta.1...@figle/spec-schema@1.0.0-beta.2) (2026-06-24)
 
 ### Features

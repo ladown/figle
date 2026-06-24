@@ -1,6 +1,6 @@
 {
   "name": "@figle/spec-schema",
-  "version": "1.0.0-beta.2",
+  "version": "1.0.0-beta.3",
   "description": "Canonical Spec and BridgeConfig schemas, plus the agent prompt template.",
   "license": "MIT",
   "type": "module",
