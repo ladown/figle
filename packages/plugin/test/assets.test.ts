@@ -1,3 +1,4 @@
+import { createHash } from "node:crypto";
 import { describe, expect, it } from "vitest";
 import type { RawNode } from "../src/extract/index.js";
 import { runFromRaw } from "../src/orchestrator.js";
@@ -118,5 +119,19 @@ describe("assets in SpecCopyPayload", () => {
     };
     expect(image.$type).toBe("image");
     expect(image.src).toBe(payload.assets[0]?.path);
+  });
+
+  // The plugin runs in the Figma main-thread sandbox, which has no `crypto`
+  // global, so hashing is a pure-JS SHA-256. Lock it to the real digest.
+  it("names assets with a real SHA-256 prefix of their bytes", async () => {
+    const root = layoutNode([
+      imageNode("thumb", { width: 200, height: 200 }, PNG_A),
+    ]);
+    const payload = await runFromRaw([{ raw: root, meta: META }], null);
+    const expected = createHash("sha256")
+      .update(PNG_A)
+      .digest("hex")
+      .slice(0, 6);
+    expect(payload.assets[0]?.path).toBe(`images/thumb-${expected}.png`);
   });
 });

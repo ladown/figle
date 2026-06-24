@@ -24,6 +24,7 @@
     "@create-figma-plugin/ui": "4.0.3",
     "@create-figma-plugin/utilities": "4.0.3",
     "@figle/spec-schema": "workspace:*",
+    "@noble/hashes": "2.2.0",
     "preact": "10.29.2"
   },
   "devDependencies": {

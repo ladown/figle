@@ -1,3 +1,5 @@
+import { sha256 } from "@noble/hashes/sha2.js";
+import { bytesToHex } from "@noble/hashes/utils.js";
 import {
   SPEC_COPY_PAYLOAD_VERSION,
   SPEC_VERSION,
@@ -155,7 +157,7 @@ async function registerAsset(
   asset: RawAsset,
   rawName: string,
 ): Promise<string> {
-  const hashHex = await sha256Hex(asset.bytes);
+  const hashHex = sha256Hex(asset.bytes);
   const existing = assets.byHash.get(hashHex);
   if (existing) return existing.path;
 
@@ -175,13 +177,13 @@ function slugify(s: string): string {
     .replaceAll(/^-+|-+$/g, "");
 }
 
-async function sha256Hex(bytes: Uint8Array): Promise<string> {
-  const buffer = new ArrayBuffer(bytes.byteLength);
-  new Uint8Array(buffer).set(bytes);
-  const digest = await crypto.subtle.digest("SHA-256", buffer);
-  return [...new Uint8Array(digest)]
-    .map((b) => b.toString(16).padStart(2, "0"))
-    .join("");
+// The Figma main-thread sandbox (where the extract pipeline runs) exposes
+// neither Node's `crypto` nor the WebCrypto `crypto.subtle` global — only the
+// UI iframe does. @noble/hashes is an audited, zero-dependency pure-JS SHA-256
+// that runs in any JS runtime, so it stays sandbox-safe with no host globals
+// or network access.
+function sha256Hex(bytes: Uint8Array): string {
+  return bytesToHex(sha256(bytes));
 }
 
 function bytesToBase64(bytes: Uint8Array): string {
