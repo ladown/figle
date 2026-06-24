@@ -101,9 +101,11 @@ async function tryExtractImage(
   if (!isImageNode(node)) return false;
   const width = "width" in node ? node.width : 0;
   const height = "height" in node ? node.height : 0;
-  if (!width || !height) {
-    raw.imageOversize = { width, height };
-    return true;
+  if (width <= 0 || height <= 0) {
+    // A zero-area image fill is not a renderable asset; emitting it would
+    // produce an image node with a non-positive size that fails the Spec
+    // schema. Fall through to layout handling instead.
+    return false;
   }
   const scale =
     Math.max(width, height) > IMAGE_TARGET_SIZE

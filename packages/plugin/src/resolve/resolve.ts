@@ -157,9 +157,14 @@ function resolveAsset(
   asset: RawAsset,
 ): ResolvedIconNode | ResolvedImageNode {
   const meta = { nodeId: node.id, nodePath: ctx.currentPath() };
-  const size = node.size
-    ? { width: node.size.width, height: node.size.height }
-    : undefined;
+  // A degenerate node (e.g. a zero-height vector in a variant) reports a
+  // non-positive dimension. `AssetSizeSchema` requires positive width/height,
+  // so drop the size hint rather than emit an invalid one — for icons `size`
+  // is optional, so omitting it just loses an advisory dimension.
+  const size =
+    node.size && node.size.width > 0 && node.size.height > 0
+      ? { width: node.size.width, height: node.size.height }
+      : undefined;
   if (asset.kind === "icon") {
     const out: ResolvedIconNode = {
       $type: "icon",
