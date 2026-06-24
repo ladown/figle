@@ -1,3 +1,13 @@
+## [@figle/mcp-preset-v1.0.0-beta.2](https://github.com/ladown/figle/compare/@figle/mcp-preset@1.0.0-beta.1...@figle/mcp-preset@1.0.0-beta.2) (2026-06-24)
+
+### Bug Fixes
+
+* resolve workspace deps to concrete versions when publishing ([d2c26ab](https://github.com/ladown/figle/commit/d2c26abc11cfe8295843492f9bedc71b46d7a8bb))
+
+### Documentation
+
+* **mcp-preset:** correct local MCP server enable steps ([7ad850e](https://github.com/ladown/figle/commit/7ad850edc10c3826ed6ad299032d45f08ea5672e))
+
 ## @figle/mcp-preset-v1.0.0-beta.1 (2026-06-03)
 
 ### Features
