@@ -54,6 +54,7 @@
     [
       "@semantic-release/exec",
       {
+        "analyzeCommitsCmd": "node ../../scripts/detect-dependency-bump.mjs",
         "prepareCmd": "node ../../scripts/rewrite-workspace-deps.mjs pack"
       }
     ],
