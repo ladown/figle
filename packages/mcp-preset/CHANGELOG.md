@@ -1,3 +1,9 @@
+## [@figle/mcp-preset-v1.0.0-beta.3](https://github.com/ladown/figle/compare/@figle/mcp-preset@1.0.0-beta.2...@figle/mcp-preset@1.0.0-beta.3) (2026-06-24)
+
+### Bug Fixes
+
+* rewrite workspace deps before publish via exec, not prepack ([725df0b](https://github.com/ladown/figle/commit/725df0b101cf34538f385da8fc590c8dfe655fb0))
+
 ## [@figle/mcp-preset-v1.0.0-beta.2](https://github.com/ladown/figle/compare/@figle/mcp-preset@1.0.0-beta.1...@figle/mcp-preset@1.0.0-beta.2) (2026-06-24)
 
 ### Bug Fixes
