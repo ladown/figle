@@ -104,5 +104,14 @@ export type RawNode = {
   };
   asset?: RawAsset;
   imageOversize?: { width: number; height: number };
+  // Present only on a COMPONENT_SET whose variant axes were read from Figma's
+  // `componentPropertyDefinitions`. When absent, a COMPONENT_SET resolves to a
+  // plain layout (the zero-variant fallback).
+  componentSet?: {
+    axes: Record<string, string[]>;
+  };
+  // Present on each COMPONENT child of such a set: its parsed variant name
+  // (e.g. { Style: "primary", Size: "sm", State: "default" }).
+  variantKey?: Record<string, string>;
   children?: RawNode[];
 };

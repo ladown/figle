@@ -167,6 +167,14 @@ function normalizeVariantValue(value: string): PropValue | null {
   return value.toLowerCase();
 }
 
-function toCamelCase(s: string): string {
-  return s.charAt(0).toLowerCase() + s.slice(1);
+export function toCamelCase(s: string): string {
+  const parts = s.split(/[^a-zA-Z0-9]+/).filter(Boolean);
+  if (parts.length === 0) return s;
+  return parts
+    .map((part, i) =>
+      i === 0
+        ? part.charAt(0).toLowerCase() + part.slice(1)
+        : part.charAt(0).toUpperCase() + part.slice(1),
+    )
+    .join("");
 }

@@ -1,5 +1,6 @@
 import type {
   ComponentRef,
+  ComponentSetNode,
   IconNode,
   ImageNode,
   LayoutNode,
@@ -19,6 +20,10 @@ export type ResolvedComponentRef = Omit<ComponentRef, "children" | "slots"> & {
   children?: ResolvedNode[];
   slots?: Record<string, ResolvedNode[]>;
 };
+export type ResolvedComponentSetNode = Omit<ComponentSetNode, "variants"> & {
+  _meta: ResolveMeta;
+  variants: Array<{ key: Record<string, string>; node: ResolvedNode }>;
+};
 export type ResolvedLayoutNode = Omit<LayoutNode, "children"> & {
   _meta: ResolveMeta;
   children: ResolvedNode[];
@@ -37,6 +42,7 @@ export type ResolvedImageNode = Omit<ImageNode, "src"> & {
 
 export type ResolvedNode =
   | ResolvedComponentRef
+  | ResolvedComponentSetNode
   | ResolvedLayoutNode
   | ResolvedTextNode
   | ResolvedIconNode

@@ -6,6 +6,7 @@ import {
   SpecCopyPayloadSchema,
   sortKeysDeep,
   type ComponentRef,
+  type ComponentSetNode,
   type IconNode,
   type ImageNode,
   type LayoutNode,
@@ -116,6 +117,20 @@ async function stripMeta(
       );
       out.slots = Object.fromEntries(entries);
     }
+    return out;
+  }
+  if (node.$type === "componentSet") {
+    const out: ComponentSetNode = {
+      $type: "componentSet",
+      name: node.name,
+      axes: node.axes,
+      variants: await Promise.all(
+        node.variants.map(async (v) => ({
+          key: v.key,
+          node: await stripMeta(v.node, assets),
+        })),
+      ),
+    };
     return out;
   }
   if (node.$type === "layout") {

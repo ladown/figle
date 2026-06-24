@@ -156,8 +156,28 @@ export type ImageNode = {
   size: { width: number; height: number };
 };
 
+// A Figma component set (variant group) exported as its source-of-truth
+// definition rather than a usage. `axes` lists every variant property and its
+// possible values, taken verbatim from Figma's `componentPropertyDefinitions`
+// (property names are NOT normalized — the project side maps them to its own
+// prop names). Each `variants[].key` pins one combination of those axes to the
+// subtree that renders it. Lets a consuming agent recognize "one component with
+// these variant axes" instead of reverse-engineering a flat list of frames.
+export type ComponentSetVariant = {
+  key: Record<string, string>;
+  node: SpecNode;
+};
+
+export type ComponentSetNode = {
+  $type: "componentSet";
+  name: string;
+  axes: Record<string, string[]>;
+  variants: ComponentSetVariant[];
+};
+
 export type SpecNode =
   | ComponentRef
+  | ComponentSetNode
   | LayoutNode
   | TextNode
   | IconNode
@@ -166,6 +186,7 @@ export type SpecNode =
 export const SpecNodeSchema: z.ZodType<SpecNode> = z.lazy(() =>
   z.union([
     ComponentRefSchema,
+    ComponentSetNodeSchema,
     LayoutNodeSchema,
     TextNodeSchema,
     IconNodeSchema,
@@ -217,6 +238,20 @@ export const ComponentRefSchema: z.ZodType<ComponentRef> = z.lazy(() =>
     states: z.record(z.string(), StateSnapshotSchema).optional(),
     children: z.array(SpecNodeSchema).optional(),
     slots: z.record(z.string(), z.array(SpecNodeSchema)).optional(),
+  }),
+);
+
+export const ComponentSetNodeSchema: z.ZodType<ComponentSetNode> = z.lazy(() =>
+  z.object({
+    $type: z.literal("componentSet"),
+    name: z.string().min(1),
+    axes: z.record(z.string(), z.array(z.string())),
+    variants: z.array(
+      z.object({
+        key: z.record(z.string(), z.string()),
+        node: SpecNodeSchema,
+      }),
+    ),
   }),
 );
 

@@ -6,11 +6,13 @@ import {
   lookupComponent,
   resolveMappedInstance,
   resolvePassthroughInstance,
+  toCamelCase,
 } from "./instance.js";
 import { resolveLayoutShape } from "./layout.js";
 import { resolveText } from "./text.js";
 import type {
   ResolveResult,
+  ResolvedComponentSetNode,
   ResolvedIconNode,
   ResolvedImageNode,
   ResolvedLayoutNode,
@@ -29,6 +31,10 @@ export function resolve(
 }
 
 function resolveNode(ctx: ResolveContext, node: RawNode): ResolvedNode {
+  if (node.componentSet) {
+    return resolveComponentSet(ctx, node, node.componentSet);
+  }
+
   if (node.asset) {
     return resolveAsset(ctx, node, node.asset);
   }
@@ -64,6 +70,50 @@ function resolveNode(ctx: ResolveContext, node: RawNode): ResolvedNode {
   }
 
   return resolveLayout(ctx, node);
+}
+
+// Component-set axis names AND values are normalized to camelCase
+// (`Icon only` → `iconOnly`, `Secondary color` → `secondaryColor`) so the
+// emitted definition uses one consistent casing the project side can rely on.
+function camelCaseVariantKey(
+  record: Record<string, string>,
+): Record<string, string> {
+  const out: Record<string, string> = {};
+  for (const [key, value] of Object.entries(record)) {
+    out[toCamelCase(key)] = toCamelCase(value);
+  }
+  return out;
+}
+
+function resolveComponentSet(
+  ctx: ResolveContext,
+  node: RawNode,
+  componentSet: NonNullable<RawNode["componentSet"]>,
+): ResolvedComponentSetNode {
+  const variants = (node.children ?? [])
+    .filter((c) => c.visible !== false)
+    .map((child) => {
+      ctx.enter(child.name);
+      const resolved = resolveNode(ctx, child);
+      ctx.exit();
+      return {
+        key: camelCaseVariantKey(child.variantKey ?? {}),
+        node: resolved,
+      };
+    });
+
+  const axes: Record<string, string[]> = {};
+  for (const [property, values] of Object.entries(componentSet.axes)) {
+    axes[toCamelCase(property)] = values.map(toCamelCase);
+  }
+
+  return {
+    $type: "componentSet",
+    name: node.name,
+    axes,
+    variants,
+    _meta: { nodeId: node.id, nodePath: ctx.currentPath() },
+  };
 }
 
 function resolveLayout(ctx: ResolveContext, node: RawNode): ResolvedLayoutNode {

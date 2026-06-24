@@ -26,10 +26,16 @@ type Spec = {
 ## Nodes
 
 ```ts
-type SpecNode = ComponentRef | LayoutNode | TextNode;
+type SpecNode =
+  | ComponentRef
+  | ComponentSetNode
+  | LayoutNode
+  | TextNode
+  | IconNode
+  | ImageNode;
 ```
 
-Discriminated by the presence of `$component` (ComponentRef) or by `$type` (`'layout'` or `'text'`).
+Discriminated by the presence of `$component` (ComponentRef) or by `$type` (`'componentSet'`, `'layout'`, `'text'`, `'icon'`, `'image'`).
 
 ### `ComponentRef`
 
@@ -55,6 +61,30 @@ Rules:
 - `children` is reserved for the default slot when the bridge config marks it (typical case: a button label). In zero-config mode the producer treats every direct child of the instance as a default-slot child.
 - `slots` is for components with multiple named slots. Each entry maps a slot name (project-side) to an array of nodes.
 - With a config, the producer must NOT recurse into instance internals beyond declared slots. The internals belong to the project component.
+
+### `ComponentSetNode`
+
+A Figma **component set** (variant group) exported as its source-of-truth definition rather than as a usage. Emitted when the extracted node (or a descendant) is a `COMPONENT_SET` whose variant axes are readable. Lets a consuming agent recognize "one component with these variant axes" instead of reverse-engineering a flat list of near-identical frames.
+
+```ts
+type ComponentSetNode = {
+  $type: "componentSet";
+  name: string; // the component-set name, e.g. 'ButtonBase'
+  axes: Record<string, string[]>; // variant property -> its possible values
+  variants: Array<{
+    key: Record<string, string>; // one combination, e.g. { Style: 'primary', Size: 'sm', State: 'default' }
+    node: SpecNode; // the subtree that renders this variant (usually a LayoutNode)
+  }>;
+};
+```
+
+Rules:
+
+- `axes` comes from Figma's `componentPropertyDefinitions` (only `VARIANT`-typed properties). Both property names **and** their values are normalized to **camelCase** (`Icon only` → `iconOnly`, `Secondary color` → `secondaryColor`), so a consuming agent sees one consistent casing.
+- Each `variants[].key` is the parsed variant name of one `COMPONENT` child, with the same camelCase normalization applied to keys and values; its keys are a subset of `axes` keys and its values are members of the corresponding `axes` value list.
+- `variants[].node` is the fully resolved subtree, identical to what the producer would emit for that frame on its own — token references, icons, and text are preserved.
+- **Fallback:** when a `COMPONENT_SET` declares no variant axes (e.g. an unassembled set), the producer does **not** emit a `ComponentSetNode`. It falls back to the plain `LayoutNode` path (the previous behaviour), so nothing is lost.
+- A `ComponentSetNode` describes a definition, not an instance. Instances of the set still resolve to a `ComponentRef` as before.
 
 ### `LayoutNode`
 

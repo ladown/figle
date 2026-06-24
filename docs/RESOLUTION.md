@@ -18,6 +18,19 @@ With a config, the same steps below run end-to-end and produce project-side name
 
 The order matters. Earlier matches win.
 
+### 0. Component set (variant group)
+
+If the Figma node is a `COMPONENT_SET` (`node.type === 'COMPONENT_SET'`):
+
+1. Read its variant axes from `componentPropertyDefinitions` — only `VARIANT`-typed properties, using their `variantOptions`. Property names and their values are normalized to camelCase via `toCamelCase` (`Icon only` → `iconOnly`, `Secondary color` → `secondaryColor`).
+2. **Has axes** — resolve to a `ComponentSetNode`:
+   - `name` ← the set name.
+   - `axes` ← the variant properties and their possible values, all camelCased.
+   - `variants` ← one entry per `COMPONENT` child: `key` is the child's parsed variant name with keys and values camelCased, `node` is the child subtree resolved through the full algorithm (so its tokens, icons, and text are preserved).
+3. **No axes** (e.g. an unassembled set) — fall through to the plain layout path (step 6+). The set is exported as a `LayoutNode` exactly as before. Nothing is dropped.
+
+This step is about a component-set **definition**. Instances of a set are unaffected and still resolve via step 1.
+
 ### 1. Component instance lookup
 
 If the Figma node is a `INSTANCE` (`node.type === 'INSTANCE'`):

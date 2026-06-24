@@ -15,6 +15,7 @@ In scope for V1:
 - `packages/bridge` — `@figle/cli`: `defineConfig` helper, `figle sync` and `figle paste` CLI commands
 - Token resolution via Figma variables and styles
 - Component resolution via component instances and variant property mapping
+- Component-set definition export: a selected `COMPONENT_SET` resolves to a `ComponentSetNode` carrying its variant `axes` (camelCased) and a keyed list of variants, so a consuming agent recognizes one component with variant axes instead of a flat frame list. Falls back to a plain `LayoutNode` when the set declares no variant axes. See [`./SPEC_FORMAT.md`](./SPEC_FORMAT.md) § `ComponentSetNode` and [`./RESOLUTION.md`](./RESOLUTION.md) § Component set.
 - Designer-hygiene warnings: `UNBOUND_COLOR`, `UNBOUND_TYPOGRAPHY`, `UNBOUND_SPACING`, `UNBOUND_RADIUS`, `UNKNOWN_COMPONENT`, `UNMAPPED_TOKEN`, `AMBIGUOUS_VARIANT`
 - Plugin UI: Spec panel (pretty-printed JSON) + warnings panel + Copy button
 - Bridge config delivery via one-time paste into `figma.clientStorage`

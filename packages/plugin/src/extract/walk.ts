@@ -56,6 +56,10 @@ export async function walkNode(node: SceneNode): Promise<RawNode> {
     raw.instance = await extractInstance(node);
   }
 
+  if (node.type === "COMPONENT_SET" && (await extractComponentSet(node, raw))) {
+    return raw;
+  }
+
   if (await tryExtractIcon(node, raw)) {
     return raw;
   }
@@ -298,6 +302,45 @@ async function extractText(
     content: node.characters,
     typography,
   };
+}
+
+// Reads a component set's variant axes from Figma's variant property
+// definitions and walks its variant children, tagging each with its parsed
+// variant key. Returns false when the set declares no variant axes, so the
+// caller falls back to treating it as a plain layout.
+async function extractComponentSet(
+  node: ComponentSetNode,
+  raw: RawNode,
+): Promise<boolean> {
+  let axes: Record<string, string[]>;
+  try {
+    const defs = node.componentPropertyDefinitions;
+    axes = {};
+    for (const [key, def] of Object.entries(defs)) {
+      if (
+        def.type === "VARIANT" &&
+        Array.isArray(def.variantOptions) &&
+        def.variantOptions.length > 0
+      ) {
+        axes[key] = def.variantOptions;
+      }
+    }
+  } catch {
+    return false;
+  }
+
+  if (Object.keys(axes).length === 0) return false;
+
+  raw.componentSet = { axes };
+  raw.children = await Promise.all(
+    node.children.map(async (child) => {
+      const childRaw = await walkNode(child);
+      const key = parseVariantName(child.name);
+      if (Object.keys(key).length > 0) childRaw.variantKey = key;
+      return childRaw;
+    }),
+  );
+  return true;
 }
 
 async function extractInstance(
