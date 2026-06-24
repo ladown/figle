@@ -1,4 +1,3 @@
-#!/usr/bin/env node
 // Resolve pnpm `workspace:` dependency specifiers to concrete versions before
 // publishing. `npm publish` (used by @semantic-release/npm, which keeps npm's
 // OIDC trusted publishing working) does not rewrite the `workspace:` protocol
@@ -19,14 +18,22 @@ import {
 import { tmpdir } from "node:os";
 import { dirname, join, resolve } from "node:path";
 
+type Manifest = {
+  name: string;
+  version?: string;
+  dependencies?: Record<string, string>;
+  peerDependencies?: Record<string, string>;
+  optionalDependencies?: Record<string, string>;
+};
+
 const mode = process.argv[2];
 if (mode !== "pack" && mode !== "restore") {
-  console.error("usage: rewrite-workspace-deps.mjs <pack|restore>");
+  console.error("usage: rewrite-workspace-deps.ts <pack|restore>");
   process.exit(1);
 }
 
 const pkgPath = resolve(process.cwd(), "package.json");
-const pkg = JSON.parse(readFileSync(pkgPath, "utf8"));
+const pkg = JSON.parse(readFileSync(pkgPath, "utf8")) as Manifest;
 const backupPath = join(
   tmpdir(),
   `figle-workspace-bak-${pkg.name.replaceAll(/[^a-z0-9]/gi, "-")}.json`,
@@ -48,7 +55,7 @@ for (const field of [
   "dependencies",
   "peerDependencies",
   "optionalDependencies",
-]) {
+] as const) {
   const deps = pkg[field];
   if (!deps) continue;
   for (const [name, spec] of Object.entries(deps)) {
@@ -74,7 +81,7 @@ if (changed) {
   writeFileSync(pkgPath, `${JSON.stringify(pkg, null, 2)}\n`);
 }
 
-function readWorkspaceVersions() {
+function readWorkspaceVersions(): Map<string, string> {
   let root = process.cwd();
   while (!existsSync(join(root, "pnpm-workspace.yaml"))) {
     const parent = dirname(root);
@@ -84,12 +91,12 @@ function readWorkspaceVersions() {
     }
     root = parent;
   }
-  const map = new Map();
+  const map = new Map<string, string>();
   const packagesDir = join(root, "packages");
   for (const entry of readdirSync(packagesDir)) {
     const manifest = join(packagesDir, entry, "package.json");
     if (!existsSync(manifest)) continue;
-    const json = JSON.parse(readFileSync(manifest, "utf8"));
+    const json = JSON.parse(readFileSync(manifest, "utf8")) as Manifest;
     if (json.name && json.version) map.set(json.name, json.version);
   }
   return map;

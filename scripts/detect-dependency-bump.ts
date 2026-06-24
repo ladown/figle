@@ -1,11 +1,10 @@
-#!/usr/bin/env node
 // Force a release when a package's published artifact pins an out-of-date
 // workspace dependency.
 //
 // `semantic-release-monorepo` only releases a package when commits touch that
 // package's own directory. So a change to `@figle/spec-schema` publishes a new
 // spec-schema but leaves `@figle/cli` / `@figle/mcp-preset` pinned (via
-// `rewrite-workspace-deps.mjs`) to the *previous* spec-schema version — users
+// `rewrite-workspace-deps.ts`) to the *previous* spec-schema version — users
 // then get a CLI validating against a stale schema.
 //
 // Wired as `@semantic-release/exec`'s `analyzeCommitsCmd`: semantic-release
@@ -22,20 +21,28 @@ import { execFileSync } from "node:child_process";
 import { existsSync, readdirSync, readFileSync } from "node:fs";
 import { dirname, join, resolve } from "node:path";
 
-function log(message) {
+type Manifest = {
+  name?: string;
+  version?: string;
+  dependencies?: Record<string, string>;
+  peerDependencies?: Record<string, string>;
+  optionalDependencies?: Record<string, string>;
+};
+
+function log(message: string): void {
   process.stderr.write(`detect-dependency-bump: ${message}\n`);
 }
 
 try {
   const pkg = JSON.parse(
     readFileSync(resolve(process.cwd(), "package.json"), "utf8"),
-  );
+  ) as Manifest;
 
   const workspaceDeps = collectWorkspaceDeps(pkg);
   if (workspaceDeps.length === 0) process.exit(0);
 
   const distTag = channelDistTag();
-  const published = publishedDependencies(pkg.name, distTag);
+  const published = publishedDependencies(pkg.name ?? "", distTag);
   if (!published) {
     log(`${pkg.name}@${distTag} not published yet — leaving it to commits`);
     process.exit(0);
@@ -59,13 +66,13 @@ try {
   process.exit(0);
 }
 
-function collectWorkspaceDeps(pkg) {
-  const names = [];
+function collectWorkspaceDeps(pkg: Manifest): string[] {
+  const names: string[] = [];
   for (const field of [
     "dependencies",
     "peerDependencies",
     "optionalDependencies",
-  ]) {
+  ] as const) {
     const deps = pkg[field];
     if (!deps) continue;
     for (const [name, spec] of Object.entries(deps)) {
@@ -81,12 +88,12 @@ function collectWorkspaceDeps(pkg) {
   return names;
 }
 
-function channelDistTag() {
+function channelDistTag(): string {
   const branch = process.env.GITHUB_REF_NAME ?? gitBranch() ?? "beta";
   return branch === "master" ? "latest" : "beta";
 }
 
-function gitBranch() {
+function gitBranch(): string | undefined {
   try {
     return execFileSync("git", ["rev-parse", "--abbrev-ref", "HEAD"], {
       encoding: "utf8",
@@ -98,20 +105,23 @@ function gitBranch() {
 
 // Returns the published package's `dependencies` object for the given dist-tag,
 // or `null` when the package/tag is not published (or the lookup failed).
-function publishedDependencies(name, distTag) {
+function publishedDependencies(
+  name: string,
+  distTag: string,
+): Record<string, string> | null {
   try {
     const out = execFileSync(
       "npm",
       ["view", `${name}@${distTag}`, "dependencies", "--json"],
       { encoding: "utf8", stdio: ["ignore", "pipe", "ignore"] },
     ).trim();
-    return out ? JSON.parse(out) : {};
+    return out ? (JSON.parse(out) as Record<string, string>) : {};
   } catch {
     return null;
   }
 }
 
-function readWorkspaceVersions() {
+function readWorkspaceVersions(): Map<string, string> {
   let root = process.cwd();
   while (!existsSync(join(root, "pnpm-workspace.yaml"))) {
     const parent = dirname(root);
@@ -120,12 +130,12 @@ function readWorkspaceVersions() {
     }
     root = parent;
   }
-  const map = new Map();
+  const map = new Map<string, string>();
   const packagesDir = join(root, "packages");
   for (const entry of readdirSync(packagesDir)) {
     const manifest = join(packagesDir, entry, "package.json");
     if (!existsSync(manifest)) continue;
-    const json = JSON.parse(readFileSync(manifest, "utf8"));
+    const json = JSON.parse(readFileSync(manifest, "utf8")) as Manifest;
     if (json.name && json.version) map.set(json.name, json.version);
   }
   return map;

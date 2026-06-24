@@ -16,7 +16,7 @@ export default defineConfig({
       files: [
         "packages/bridge/src/**/*.ts",
         "packages/mcp-preset/src/**/*.ts",
-        "scripts/**/*.mjs",
+        "scripts/**/*.ts",
       ],
       rules: {
         "no-console": "off",
