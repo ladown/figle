@@ -1,3 +1,9 @@
+## [@figle/cli-v1.0.0-beta.3](https://github.com/ladown/figle/compare/@figle/cli@1.0.0-beta.2...@figle/cli@1.0.0-beta.3) (2026-06-24)
+
+### Bug Fixes
+
+* resolve workspace deps to concrete versions when publishing ([d2c26ab](https://github.com/ladown/figle/commit/d2c26abc11cfe8295843492f9bedc71b46d7a8bb))
+
 ## [@figle/cli-v1.0.0-beta.2](https://github.com/ladown/figle/compare/@figle/cli@1.0.0-beta.1...@figle/cli@1.0.0-beta.2) (2026-06-24)
 
 ### Features
