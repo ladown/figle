@@ -51,6 +51,12 @@
         "message": "chore(release): ${nextRelease.gitTag} [skip ci]\n\n${nextRelease.notes}"
       }
     ],
+    [
+      "@semantic-release/exec",
+      {
+        "prepareCmd": "node ../../scripts/rewrite-workspace-deps.mjs pack"
+      }
+    ],
     "@semantic-release/github"
   ]
 }

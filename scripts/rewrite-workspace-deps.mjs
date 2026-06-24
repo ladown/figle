@@ -1,11 +1,14 @@
 #!/usr/bin/env node
-// Resolve pnpm `workspace:` dependency specifiers to concrete versions for the
-// published tarball, then restore the source. `npm publish` (used by
-// @semantic-release/npm, which keeps npm's OIDC trusted publishing working)
-// does not rewrite the `workspace:` protocol the way `pnpm publish` does, so a
-// naive publish ships an uninstallable `"@figle/x": "workspace:*"`. This script
-// runs as `prepack` (rewrite) and `postpack` (restore) so only the tarball is
-// changed; the committed package.json keeps its `workspace:*` specifiers.
+// Resolve pnpm `workspace:` dependency specifiers to concrete versions before
+// publishing. `npm publish` (used by @semantic-release/npm, which keeps npm's
+// OIDC trusted publishing working) does not rewrite the `workspace:` protocol
+// the way `pnpm publish` does, so a naive publish ships an uninstallable
+// `"@figle/x": "workspace:*"`. A `prepack` hook is too late — npm caches the
+// manifest before it runs — so this is wired as @semantic-release/exec's
+// `prepareCmd`, placed AFTER @semantic-release/git in the plugin list: the
+// release commit keeps `workspace:*`, and the on-disk manifest is concrete by
+// the time the later publish step packs the tarball. `restore` is provided for
+// running the rewrite safely on a local checkout.
 import {
   existsSync,
   readdirSync,

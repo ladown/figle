@@ -44,9 +44,7 @@
   "scripts": {
     "build": "tsdown",
     "typecheck": "tsc --noEmit",
-    "release": "semantic-release",
-    "prepack": "node ../../scripts/rewrite-workspace-deps.mjs pack",
-    "postpack": "node ../../scripts/rewrite-workspace-deps.mjs restore"
+    "release": "semantic-release"
   },
   "dependencies": {
     "@figle/spec-schema": "workspace:*"
