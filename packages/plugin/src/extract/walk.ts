@@ -122,8 +122,16 @@ async function tryExtractImage(
   }
 }
 
-function isIconCandidate(node: SceneNode, raw: RawNode): boolean {
+export function isIconCandidate(node: SceneNode, raw: RawNode): boolean {
+  // Leaf vector shapes are always icons.
   if (node.type === "VECTOR" || node.type === "BOOLEAN_OPERATION") return true;
+
+  // Never flatten a composite into a single icon: an auto-layout frame or
+  // anything containing text is a layout/component — e.g. a button variant
+  // named "…Icon only=Off…" — not a glyph, even if the name mentions "icon".
+  if (raw.autoLayout) return false;
+  if (hasTextDescendant(node)) return false;
+
   if (/icon/i.test(node.name)) return true;
   if (
     node.type === "INSTANCE" &&
@@ -131,6 +139,14 @@ function isIconCandidate(node: SceneNode, raw: RawNode): boolean {
     /icon/i.test(raw.instance.mainComponentName)
   ) {
     return true;
+  }
+  return false;
+}
+
+function hasTextDescendant(node: SceneNode): boolean {
+  if (node.type === "TEXT") return true;
+  if ("children" in node && Array.isArray(node.children)) {
+    return node.children.some((child) => hasTextDescendant(child));
   }
   return false;
 }
