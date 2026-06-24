@@ -188,7 +188,31 @@ function parsePayload(input: unknown): SpecCopyPayload {
   for (const issue of newFmt.error.issues.slice(0, 5)) {
     console.error(`  ${issue.path.join(".") || "<root>"}: ${issue.message}`);
   }
+  const rootType = describeRootType(input);
+  if (rootType) {
+    console.error(
+      `  received root ${rootType} — the payload may come from a newer plugin than this CLI.`,
+    );
+    console.error("  update with: npx @figle/cli@latest (or @beta)");
+  }
   process.exit(1);
+}
+
+// Best-effort peek at the payload's root node kind, used only to make the
+// schema-mismatch error actionable when the plugin emits a node type this
+// CLI's bundled spec-schema does not yet know (version skew).
+function describeRootType(input: unknown): string | undefined {
+  if (typeof input !== "object" || input === null) return undefined;
+  const specs = (input as { specs?: unknown }).specs;
+  const root =
+    Array.isArray(specs) && typeof specs[0] === "object" && specs[0] !== null
+      ? (specs[0] as { root?: unknown }).root
+      : undefined;
+  if (typeof root !== "object" || root === null) return undefined;
+  const r = root as { $component?: unknown; $type?: unknown };
+  if (typeof r.$component === "string") return `"${r.$component}"`;
+  if (typeof r.$type === "string") return `"$type: ${r.$type}"`;
+  return undefined;
 }
 
 function buildPromptHeader(specFiles: SpecFile[], outDirRel: string): string {
