@@ -7,12 +7,27 @@ export type OutputDir = {
   relative: string;
 };
 
+export type OutputDirSources = {
+  /** Folder picked via `--pick`'s native dialog, relativized to cwd. Highest priority. */
+  pickedDir?: string | undefined;
+  /** `--out <dir>` flag — an explicit per-run override. */
+  cliFlag?: string | undefined;
+  /** `outputDir` embedded in the copied payload (chosen in the plugin). */
+  payloadDir?: string | undefined;
+  /** `output.dir` from the project's figle.config — the project default. */
+  configDir?: string | undefined;
+};
+
 export function resolveOutputDir(
   cwd: string,
-  configDir: string | undefined,
-  cliFlag: string | undefined,
+  sources: OutputDirSources,
 ): OutputDir {
-  const requested = cliFlag ?? configDir ?? ".figle";
+  const requested =
+    sources.pickedDir ??
+    sources.cliFlag ??
+    sources.payloadDir ??
+    sources.configDir ??
+    ".figle";
   if (isAbsolute(requested)) {
     throw new InvalidOutputDirError(
       `output directory must be relative to the project (got "${requested}").`,

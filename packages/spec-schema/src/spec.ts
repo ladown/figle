@@ -275,6 +275,10 @@ export const SpecCopyPayloadSchema = z.object({
   payloadVersion: z.literal(SPEC_COPY_PAYLOAD_VERSION),
   specs: z.array(SpecSchema).min(1),
   assets: z.array(SpecAssetSchema),
+  // Project-relative folder the designer chose in the plugin. Advisory only:
+  // the CLI validates it and lets a `--out` flag override it. Additive/optional
+  // so older CLIs simply ignore it.
+  outputDir: z.string().min(1).optional(),
 });
 
 export type SpecCopyPayload = z.infer<typeof SpecCopyPayloadSchema>;

@@ -39,8 +39,14 @@ type AssetCollector = {
   byHash: Map<string, { path: string; base64: string }>;
 };
 
+export type SerializeOptions = {
+  /** Project-relative output folder chosen in the plugin, if any. */
+  outputDir?: string | undefined;
+};
+
 export async function serialize(
   inputs: SerializeInput[],
+  options: SerializeOptions = {},
 ): Promise<SpecCopyPayload> {
   if (inputs.length === 0) {
     throw new Error("serialize: at least one input is required");
@@ -66,6 +72,7 @@ export async function serialize(
     payloadVersion: SPEC_COPY_PAYLOAD_VERSION,
     specs,
     assets,
+    ...(options.outputDir ? { outputDir: options.outputDir } : {}),
   });
   return SpecCopyPayloadSchema.parse(payload);
 }

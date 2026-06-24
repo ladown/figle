@@ -5,6 +5,7 @@ import {
   serialize,
   type SerializeInput,
   type SerializeMeta,
+  type SerializeOptions,
 } from "./serialize/index.js";
 
 export type PipelineInput = {
@@ -20,6 +21,7 @@ export type RawPipelineInput = {
 export async function runPipeline(
   inputs: PipelineInput[],
   config: BridgeConfig | null,
+  options: SerializeOptions = {},
 ): Promise<SpecCopyPayload> {
   const rawInputs: RawPipelineInput[] = await Promise.all(
     inputs.map(async ({ node, meta }) => ({
@@ -27,16 +29,17 @@ export async function runPipeline(
       meta,
     })),
   );
-  return runFromRaw(rawInputs, config);
+  return runFromRaw(rawInputs, config, options);
 }
 
 export async function runFromRaw(
   inputs: RawPipelineInput[],
   config: BridgeConfig | null,
+  options: SerializeOptions = {},
 ): Promise<SpecCopyPayload> {
   const serializeInputs: SerializeInput[] = inputs.map(({ raw, meta }) => {
     const { root, warnings } = resolve(raw, config);
     return { root, warnings, meta };
   });
-  return serialize(serializeInputs);
+  return serialize(serializeInputs, options);
 }

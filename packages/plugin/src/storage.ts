@@ -25,6 +25,7 @@ const PREFS_KEY = "figle.extract-preferences";
 
 export type ExtractPreferences = {
   multi: boolean;
+  outputDir?: string;
 };
 
 const DEFAULT_PREFS: ExtractPreferences = { multi: false };
@@ -35,7 +36,12 @@ export async function loadExtractPreferences(): Promise<ExtractPreferences> {
     return DEFAULT_PREFS;
   }
   const multi = (raw as { multi?: unknown }).multi === true;
-  return { multi };
+  const rawDir = (raw as { outputDir?: unknown }).outputDir;
+  const outputDir =
+    typeof rawDir === "string" && rawDir.trim() !== ""
+      ? rawDir.trim()
+      : undefined;
+  return outputDir === undefined ? { multi } : { multi, outputDir };
 }
 
 export async function saveExtractPreferences(

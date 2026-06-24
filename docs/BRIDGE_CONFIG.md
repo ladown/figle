@@ -110,6 +110,28 @@ type SlotMode =
 
 **`slots`** — declares which parts of the instance should be extracted as children. See [`./RESOLUTION.md`](./RESOLUTION.md) § Slot recursion. If `slots` is omitted, the resolver treats the component as opaque (no children extracted).
 
+### `output` (optional)
+
+```ts
+output?: {
+  dir: string; // project-relative folder, e.g. "src/components/figma"
+};
+```
+
+Where `figle paste` writes `specs/`, `assets/`, and `PROMPT.md`. The destination is resolved from these sources, highest priority first:
+
+1. `figle paste --pick` — opens a native folder dialog (Finder on macOS via `osascript`, Explorer on Windows, `zenity` on Linux) and uses the selected folder. Interactive, per-run. `--pick` and `--out` cannot be combined.
+2. The `--out <dir>` flag passed to `figle paste` (per-run override).
+3. The `outputDir` embedded in the copied payload — the **Output folder** field in the plugin's Settings tab (a per-extract designer choice, persisted in `clientStorage`).
+4. `output.dir` from this config (the project default).
+5. The built-in default `.figle`.
+
+All of them go through the same safety validation: the path must be project-relative, must not escape the project (`..`), and must not live under `node_modules`. A folder picked via `--pick` is relativized to the project first, so selecting a folder outside the project is rejected. An invalid value aborts the paste with an error.
+
+The native dialog runs only in the CLI (Node on the user's machine). The plugin itself never opens a dialog or touches the filesystem and keeps `allowedDomains: ["none"]`.
+
+The plugin cannot write to disk itself (sandboxed, `allowedDomains: ["none"]`), so the Output folder field is advisory: it travels inside the payload and `figle paste` performs the actual write.
+
 ## Versioning and hashes
 
 The CLI (`npx figle sync`) computes a hash of the resolved config and embeds it in the serialized blob. Branch A (the plugin) displays this hash in its header. When the hash changes, the plugin shows a banner: "config out of date — re-paste".

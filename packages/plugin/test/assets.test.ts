@@ -135,3 +135,19 @@ describe("assets in SpecCopyPayload", () => {
     expect(payload.assets[0]?.path).toBe(`images/thumb-${expected}.png`);
   });
 });
+
+describe("outputDir in SpecCopyPayload", () => {
+  it("omits outputDir when the plugin has none set", async () => {
+    const root = layoutNode([iconNode("arrow-left", SVG_A)]);
+    const payload = await runFromRaw([{ raw: root, meta: META }], null);
+    expect(payload.outputDir).toBeUndefined();
+  });
+
+  it("embeds the output folder chosen in the plugin", async () => {
+    const root = layoutNode([iconNode("arrow-left", SVG_A)]);
+    const payload = await runFromRaw([{ raw: root, meta: META }], null, {
+      outputDir: "src/components/figma",
+    });
+    expect(payload.outputDir).toBe("src/components/figma");
+  });
+});

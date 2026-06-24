@@ -1,5 +1,5 @@
 import { mkdir, writeFile } from "node:fs/promises";
-import { dirname, resolve } from "node:path";
+import { dirname, relative, resolve } from "node:path";
 import clipboard from "clipboardy";
 import {
   SpecCopyPayloadSchema,
@@ -11,9 +11,11 @@ import {
 } from "@figle/spec-schema";
 import { ConfigLoadError, findConfigPath, loadConfig } from "../load-config.js";
 import { InvalidOutputDirError, resolveOutputDir } from "../output-dir.js";
+import { PickDirError, pickDirectory } from "../pick-dir.js";
 
 export type PasteOptions = {
   out?: string;
+  pick?: boolean;
 };
 
 export async function runPaste(
@@ -37,10 +39,16 @@ export async function runPaste(
 
   const payload = parsePayload(parsed);
   const configOutputDir = await readConfigOutputDir(cwd);
+  const pickedDir = options.pick ? pickOutputDir(cwd) : undefined;
 
   let outDir;
   try {
-    outDir = resolveOutputDir(cwd, configOutputDir, options.out);
+    outDir = resolveOutputDir(cwd, {
+      pickedDir,
+      cliFlag: options.out,
+      payloadDir: payload.outputDir,
+      configDir: configOutputDir,
+    });
   } catch (err) {
     if (err instanceof InvalidOutputDirError) {
       console.error(`figle: ${err.message}`);
@@ -126,6 +134,26 @@ function assignSpecFilenames(specs: Spec[]): SpecFile[] {
     result.push({ filename, spec });
   }
   return result;
+}
+
+function pickOutputDir(cwd: string): string {
+  let absolute: string | null;
+  try {
+    absolute = pickDirectory();
+  } catch (err) {
+    if (err instanceof PickDirError) {
+      console.error(`figle: ${err.message}`);
+      process.exit(1);
+    }
+    throw err;
+  }
+  if (absolute === null) {
+    console.error("figle: no folder selected — aborting.");
+    process.exit(1);
+  }
+  // Relativize so it goes through the same project-relative validation as every
+  // other source; a folder outside the project becomes "../…" and is rejected.
+  return relative(cwd, absolute) || ".";
 }
 
 async function readConfigOutputDir(cwd: string): Promise<string | undefined> {

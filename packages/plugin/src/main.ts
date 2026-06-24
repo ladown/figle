@@ -91,7 +91,9 @@ async function handleExtract(): Promise<ExtractResultPayload> {
         extractedAt,
       },
     }));
-    const payload = await runPipeline(inputs, blob?.config ?? null);
+    const payload = await runPipeline(inputs, blob?.config ?? null, {
+      outputDir: prefs.outputDir,
+    });
     const warnings = payload.specs.flatMap((s) => s.warnings);
     return { ok: true, payload, warnings };
   } catch (err) {

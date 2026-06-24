@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 import { runInit } from "./commands/init.js";
-import { runPaste } from "./commands/paste.js";
+import { runPaste, type PasteOptions } from "./commands/paste.js";
 import { runSync } from "./commands/sync.js";
 
 const USAGE = `figle — bridge between the Figma plugin and your project.
@@ -8,8 +8,11 @@ const USAGE = `figle — bridge between the Figma plugin and your project.
 Usage:
   figle init [--force]              Create figle.config.ts in the current directory.
   figle sync                        Read figle.config.{ts,mts,js,mjs}, copy a hashed blob to clipboard.
-  figle paste [--out <dir>]         Read clipboard, validate as Spec, write specs/assets/PROMPT.md.
-                                    Default output dir: .figle/ (override via --out or config.output.dir).
+  figle paste [--out <dir>|--pick]  Read clipboard, validate as Spec, write specs/assets/PROMPT.md.
+                                    --pick opens a native folder dialog (Finder/Explorer/zenity).
+                                    Default output dir: .figle/ (also from config.output.dir or the
+                                    plugin's Output folder field). The chosen folder must stay inside
+                                    the project.
 `;
 
 async function main(): Promise<void> {
@@ -32,24 +35,37 @@ async function main(): Promise<void> {
       await runSync(process.cwd());
       return;
     case "paste": {
-      const outFlagIndex = rest.indexOf("--out");
       let out: string | undefined;
+      let pick = false;
       const remaining: string[] = [];
       for (let i = 0; i < rest.length; i++) {
-        if (i === outFlagIndex) {
+        const arg = rest[i]!;
+        if (arg === "--out") {
           out = rest[i + 1];
           i += 1;
+          if (out === undefined || out.startsWith("-")) {
+            console.error("figle: --out requires a directory argument.");
+            console.error(USAGE);
+            process.exit(1);
+          }
           continue;
         }
-        remaining.push(rest[i]!);
+        if (arg === "--pick") {
+          pick = true;
+          continue;
+        }
+        remaining.push(arg);
       }
-      if (outFlagIndex >= 0 && (out === undefined || out.startsWith("-"))) {
-        console.error("figle: --out requires a directory argument.");
+      if (out !== undefined && pick) {
+        console.error("figle: --out and --pick cannot be combined.");
         console.error(USAGE);
         process.exit(1);
       }
       assertNoArgs(remaining);
-      await runPaste(process.cwd(), out !== undefined ? { out } : {});
+      const opts: PasteOptions = {};
+      if (out !== undefined) opts.out = out;
+      if (pick) opts.pick = true;
+      await runPaste(process.cwd(), opts);
       return;
     }
     case undefined:

@@ -42,6 +42,7 @@ export interface PrefsSetHandler extends EventHandler {
 
 export type ExtractPrefs = {
   multi: boolean;
+  outputDir?: string;
 };
 
 export interface ExtractRequestHandler extends EventHandler {

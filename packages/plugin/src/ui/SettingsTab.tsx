@@ -5,6 +5,7 @@ import {
   Muted,
   Stack,
   Text,
+  Textbox,
   TextboxMultiline,
   Toggle,
   VerticalSpace,
@@ -84,8 +85,17 @@ export function SettingsTab() {
   };
 
   const onMultiToggle = (multi: boolean) => {
-    setPrefs({ multi });
-    emit<PrefsSetHandler>("PREFS_SET", { multi });
+    const next: ExtractPrefs = { ...prefs, multi };
+    setPrefs(next);
+    emit<PrefsSetHandler>("PREFS_SET", next);
+  };
+
+  const onOutputDirInput = (value: string) => {
+    // Persist the raw text so typing stays responsive; loadExtractPreferences
+    // trims it and maps "" → undefined when the extract pipeline reads it back.
+    const next: ExtractPrefs = { ...prefs, outputDir: value };
+    setPrefs(next);
+    emit<PrefsSetHandler>("PREFS_SET", next);
   };
 
   return (
@@ -162,6 +172,24 @@ export function SettingsTab() {
         <Muted>
           When enabled, selecting several frames runs Extract on all of them and
           bundles the results into one paste.
+        </Muted>
+      </Text>
+      <VerticalSpace space="medium" />
+      <Text>
+        <Muted>Output folder</Muted>
+      </Text>
+      <VerticalSpace space="extraSmall" />
+      <Textbox
+        placeholder=".figle"
+        value={prefs.outputDir ?? ""}
+        onValueInput={onOutputDirInput}
+      />
+      <VerticalSpace space="extraSmall" />
+      <Text>
+        <Muted>
+          Project-relative folder where <code>npx figle paste</code> writes the
+          Spec, assets, and PROMPT.md. Leave empty for the project default (
+          <code>.figle</code>). A <code>--out</code> flag always wins.
         </Muted>
       </Text>
       <VerticalSpace space="medium" />
