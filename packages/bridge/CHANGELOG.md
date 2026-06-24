@@ -1,3 +1,9 @@
+## [@figle/cli-v1.0.0-beta.2](https://github.com/ladown/figle/compare/@figle/cli@1.0.0-beta.1...@figle/cli@1.0.0-beta.2) (2026-06-24)
+
+### Features
+
+* choose paste output folder via plugin field or --pick ([2570b83](https://github.com/ladown/figle/commit/2570b83f8191f00539498de3e67aaeb851b8cd79))
+
 ## @figle/cli-v1.0.0-beta.1 (2026-06-03)
 
 ### Features
