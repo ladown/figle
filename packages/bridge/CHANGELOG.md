@@ -1,3 +1,9 @@
+## [@figle/cli-v1.0.0-beta.4](https://github.com/ladown/figle/compare/@figle/cli@1.0.0-beta.3...@figle/cli@1.0.0-beta.4) (2026-06-24)
+
+### Bug Fixes
+
+* rewrite workspace deps before publish via exec, not prepack ([725df0b](https://github.com/ladown/figle/commit/725df0b101cf34538f385da8fc590c8dfe655fb0))
+
 ## [@figle/cli-v1.0.0-beta.3](https://github.com/ladown/figle/compare/@figle/cli@1.0.0-beta.2...@figle/cli@1.0.0-beta.3) (2026-06-24)
 
 ### Bug Fixes
