@@ -1,3 +1,5 @@
+## [@figle/mcp-preset-v1.0.0-beta.4](https://github.com/ladown/figle/compare/@figle/mcp-preset@1.0.0-beta.3...@figle/mcp-preset@1.0.0-beta.4) (2026-06-24)
+
 ## [@figle/mcp-preset-v1.0.0-beta.3](https://github.com/ladown/figle/compare/@figle/mcp-preset@1.0.0-beta.2...@figle/mcp-preset@1.0.0-beta.3) (2026-06-24)
 
 ### Bug Fixes
