@@ -13,7 +13,11 @@ export default defineConfig({
   },
   overrides: [
     {
-      files: ["packages/bridge/src/**/*.ts", "packages/mcp-preset/src/**/*.ts"],
+      files: [
+        "packages/bridge/src/**/*.ts",
+        "packages/mcp-preset/src/**/*.ts",
+        "scripts/**/*.mjs",
+      ],
       rules: {
         "no-console": "off",
       },
