@@ -9,14 +9,14 @@ import { useState } from "preact/hooks";
 import { SettingsTab } from "./ui/SettingsTab.js";
 import { ExtractTab } from "./ui/ExtractTab.js";
 
-type TabValue = "extract" | "settings";
+type TabValue = "Extract" | "Settings";
 
 function Plugin() {
-  const [tab, setTab] = useState<TabValue>("extract");
+  const [tab, setTab] = useState<TabValue>("Extract");
 
   const options: Array<TabsOption & { value: TabValue }> = [
-    { value: "extract", children: <ExtractTab /> },
-    { value: "settings", children: <SettingsTab /> },
+    { value: "Extract", children: <ExtractTab /> },
+    { value: "Settings", children: <SettingsTab /> },
   ];
 
   return (
