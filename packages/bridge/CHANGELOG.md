@@ -1,3 +1,9 @@
+## [@figle/cli-v1.0.0-beta.5](https://github.com/ladown/figle/compare/@figle/cli@1.0.0-beta.4...@figle/cli@1.0.0-beta.5) (2026-06-24)
+
+### Bug Fixes
+
+* **cli:** hint at version skew when payload fails Spec schema ([cfb9cce](https://github.com/ladown/figle/commit/cfb9cceb806ea10422edf33c77272a58cf3fe3f6))
+
 ## [@figle/cli-v1.0.0-beta.4](https://github.com/ladown/figle/compare/@figle/cli@1.0.0-beta.3...@figle/cli@1.0.0-beta.4) (2026-06-24)
 
 ### Bug Fixes
